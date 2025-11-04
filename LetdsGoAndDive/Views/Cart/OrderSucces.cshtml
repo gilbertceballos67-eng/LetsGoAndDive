@@ -1,0 +1,13 @@
+﻿@model LetdsGoAndDive.Models.Order
+@{
+    ViewData["Title"] = "OrderSucces";
+}
+
+<div class="text-center mt-5">
+    <h2>✅ Thank you for your order!</h2>
+    <p>Your order number is: <strong>@Model.Id</strong></p>
+    <p>We will contact you shortly at <strong>@Model.Email</strong> or <strong>@Model.MobileNumber</strong>.</p>
+    <p>Payment Method: <strong>@Model.PaymentMethod</strong></p>
+
+    <a asp-controller="Home" asp-action="Index" class="btn btn-primary mt-3">Back to Home</a>
+</div>

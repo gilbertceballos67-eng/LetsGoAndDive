@@ -1,0 +1,63 @@
+﻿@model OrderDetailModalDTO
+
+<!-- Modal -->
+<div class="modal fade" id="modal-@Model.DivId" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5" id="exampleModalLabel">Order Detail</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <table class="table table-striped align-middle text-center">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Image</th>
+                            <th>Product</th>
+                            <th>Item</th>
+                            <th>Price</th>
+                            <th>Quantity</th>
+                            <th>Total Price</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @{
+                            double grandTotal = 0;
+                        }
+                        @foreach (var item in Model.OrderDetail)
+                        {
+                            var total = item.Quantity * item.UnitPrice;
+                            grandTotal += total;
+
+                            <tr>
+                                <td>
+                                    @if (string.IsNullOrEmpty(item.Product?.Image))
+                                    {
+                                        <img src="~/images/No_Image_Available.jpg" style="width:60px; height:60px; object-fit:cover;" />
+                                    }
+                                    else
+                                    {
+                                        <img src="~/images/@item.Product.Image" asp-append-version="true" style="width:60px; height:60px; object-fit:cover;" />
+                                    }
+                                </td>
+                                <td>@item.Product?.ProductName</td>
+                                <td>@item.Product?.ItemType?.ItemTypeName</td>
+                                <td>₱@item.UnitPrice</td>
+                                <td>@item.Quantity</td>
+                                <td><strong>₱@total</strong></td>
+                            </tr>
+                        }
+                        <tr class="table-dark">
+                            <td colspan="5" class="text-end"><strong>Grand Total:</strong></td>
+                            <td><strong>₱@grandTotal</strong></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary">Save changes</button>
+            </div>
+        </div>
+    </div>
+</div>

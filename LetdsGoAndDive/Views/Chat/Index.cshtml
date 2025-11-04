@@ -1,0 +1,49 @@
+﻿@model IEnumerable<LetdsGoAndDive.Models.Message>
+@{
+    var user = ViewBag.User as string;
+    ViewData["Title"] = "Chat with Admin";
+}
+
+<h2>Chat with Admin</h2>
+
+<div id="messagesList" style="height:400px; overflow-y:auto; border:1px solid #ccc; padding:10px;">
+    @foreach (var msg in Model)
+    {
+        <div style="@(msg.Sender == user ? "text-align:right;" : "text-align:left;")">
+            <strong>@msg.Sender:</strong> @msg.Text <br />
+            <small class="text-muted">@msg.SentAt.ToString("hh:mm tt")</small>
+        </div>
+    }
+</div>
+
+<input type="text" id="messageInput" placeholder="Type your message..." class="form-control mt-2" />
+<button id="sendButton" class="btn btn-primary mt-2">Send</button>
+
+@section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js"></script>
+    <script>
+        const connection = new signalR.HubConnectionBuilder()
+            .withUrl("/chathub")
+            .build();
+
+        connection.on("ReceiveMessage", function (user, message) {
+            const msg = document.createElement("div");
+            msg.innerHTML = `<strong>${user}:</strong> ${message}`;
+            document.getElementById("messagesList").appendChild(msg);
+        });
+
+        connection.start().catch(err => console.error(err.toString()));
+
+        document.getElementById("sendButton").addEventListener("click", function () {
+            const user = "@user";
+            const message = document.getElementById("messageInput").value;
+            const receiver = "Admin";
+
+            if (message.trim() !== "") {
+                connection.invoke("SendMessage", user, message, receiver)
+                    .catch(err => console.error(err.toString()));
+                document.getElementById("messageInput").value = "";
+            }
+        });
+    </script>
+}

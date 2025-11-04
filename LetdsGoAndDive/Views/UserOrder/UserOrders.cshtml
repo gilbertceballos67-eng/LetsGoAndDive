@@ -1,0 +1,76 @@
+﻿<link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Order Date</th>
+            <th>Order Status</th>
+            <th>Order Details</th>
+            <th>Total</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var order in Model)
+        {
+            <tr>
+                <td>@order.CreateDate.ToString("dd-MM-yyyy")</td>
+                <td>@order.OrderStatus.StatusName</td>
+                <td>
+                    @if (order.OrderDetail != null && order.OrderDetail.Count > 0)
+                    {
+                        <ul class="list-unstyled">
+                            @foreach (var detail in order.OrderDetail)
+                            {
+                                <li class="mb-2 d-flex align-items-center">
+                                    <!-- Product Image -->
+                                    @if (string.IsNullOrEmpty(detail.Product?.Image))
+                                    {
+                                        <img src="~/images/No_Image_Available.jpg"
+                             style="width:60px; height:60px; object-fit:cover; margin-right:10px;" />
+                                    }
+                                    else
+                                    {
+                                        <img src="~/images/@detail.Product.Image"
+                             asp-append-version="true"
+                             style="width:60px; height:60px; object-fit:cover; margin-right:10px;" />
+                                    }
+
+                                    <!-- Product Info -->
+                                    <div>
+                                        <strong>@detail.Product?.ProductName</strong><br />
+                                        Quantity: @detail.Quantity <br />
+                                        Price: ₱@detail.UnitPrice
+                                    </div>
+                                </li>
+                            }
+                        </ul>
+                    }
+                    else
+                    {
+                        <span>No details</span>
+                    }
+                    @if (!string.IsNullOrEmpty(order.DeliveryLink) &&
+                   order.OrderStatus.StatusName.Equals("Shipped", StringComparison.OrdinalIgnoreCase))
+                    {
+                        <div>
+                            <a href="@order.DeliveryLink" target="_blank"
+                       class="btn btn-sm btn-outline-primary mt-2">
+                                View Delivery Details
+                            </a>
+                        </div>
+                    }
+                </td>
+                <td>
+                    @{
+                        double total = 0;
+                        foreach (var d in order.OrderDetail)
+                        {
+                            total += d.Quantity * d.UnitPrice;
+                        }
+                    }
+                    <strong>₱@total</strong>
+                </td>
+
+            </tr>
+        }
+    </tbody>
+</table>

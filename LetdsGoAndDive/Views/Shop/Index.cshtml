@@ -1,0 +1,154 @@
+﻿@using LetdsGoAndDive.Models
+@using X.PagedList
+@using X.PagedList.Mvc.Core
+
+@model HomeIndexModel
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Home Page";
+}
+
+<div class="my-2">
+    <form asp-action="Index" method="get" class="row row-cols-lg-auto g-3 align-items-center">
+        <div class="col-12">
+            <label class="visually-hidden" for="sterm">Search</label>
+            <div class="input-group">
+                <input type="text" name="sterm" id="sterm"
+                       value="@Model.STerm"
+                       class="form-control"
+                       placeholder="Search by product name" />
+            </div>
+        </div>
+
+        <div class="col-12">
+            <label class="visually-hidden" for="itemtypeId">Item Type</label>
+            <select class="form-select" id="itemtypeId" name="itemtypeId">
+                @if (Model.ItemTypeId == 0)
+                {
+                    <option value="0" selected="selected">All Item Types</option>
+                }
+                else
+                {
+                    <option value="0">All Item Types</option>
+                }
+
+                @foreach (var itemtype in Model.ItemTypes ?? Enumerable.Empty<ItemType>())
+                {
+                    if (itemtype.Id == Model.ItemTypeId)
+                    {
+                        <option value="@itemtype.Id" selected="selected">@itemtype.ItemTypeName</option>
+                    }
+                    else
+                    {
+                        <option value="@itemtype.Id">@itemtype.ItemTypeName</option>
+                    }
+                }
+            </select>
+        </div>
+
+        <div class="col-12">
+            <button type="submit" class="btn btn-primary">Filter</button>
+            <a href="/Home/Index" class="btn btn-dark">Reset</a>
+        </div>
+    </form>
+</div>
+
+<!-- Product cards - MAKE SURE THIS IS ONLY ONCE -->
+<div class="w-100 mt-4 d-flex flex-wrap">
+    @foreach (var product in Model.PagedProducts ?? Enumerable.Empty<Product>())
+
+    {
+        <div class="card mx-2 mb-4" style="width: 17rem;">
+            @if (string.IsNullOrEmpty(product.Image))
+            {
+                <img style="width:100%;height:300px;object-fit:cover;"
+             src="@Url.Content("~/images/No_Image_Available.jpg")"
+             class="card-img-top" alt="No Image Available" />
+            }
+            else
+            {
+                <img style="width:100%;height:300px;object-fit:cover;"
+             src="@Url.Content($"~/images/{product.Image}")"
+             class="card-img-top" alt="@product.ProductName" />
+            }
+
+            <div class="card-body d-flex flex-column">
+                <h5 class="card-title">@product.ProductName</h5>
+                <p class="card-text">
+                    <b>Item Type:</b> @(product.ItemType?.ItemTypeName ?? "N/A")<br />
+                </p>
+                <p class="card-text">
+                    <b>Price:</b> ₱@product.Price.ToString("N2")
+                </p>
+
+                @if (product.Quantity > 0)
+                {
+                    <div class="mt-auto">
+                        <div class="d-flex align-items-center mt-2">
+                            <input type="number" id="qty-@product.Id" value="1" min="1" max="@product.Quantity"
+                           class="form-control me-2" style="width: 80px;" />
+                            <button type="button" onclick="addToCart(@product.Id)" class="btn btn-primary">Add to Cart</button>
+                        </div>
+                        <p class="text-success mt-2 mb-0"><small>In stock: @product.Quantity</small></p>
+                    </div>
+                }
+                else
+                {
+                    <div class="mt-auto">
+                        <span class="badge bg-danger p-2 w-100">Out of stock</span>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+</div>
+
+
+<div class="d-flex justify-content-center mt-4">
+    @Html.PagedListPager(
+    Model.PagedProducts,
+    page => Url.Action("Index", new {
+    page,
+    sTerm = Model.STerm,
+    itemtypeId = Model.ItemTypeId
+    }),
+    new PagedListRenderOptions
+    {
+    DisplayLinkToFirstPage = PagedListDisplayMode.Always,
+    DisplayLinkToLastPage = PagedListDisplayMode.Always,
+    DisplayLinkToPreviousPage = PagedListDisplayMode.Always,
+    DisplayLinkToNextPage = PagedListDisplayMode.Always,
+    MaximumPageNumbersToDisplay = 5,
+    UlElementClasses = new[] { "pagination" },
+    LiElementClasses = new[] { "page-item" },
+    PageClasses = new[] { "page-link" }
+    }
+    )
+</div>
+
+
+
+
+<script>
+    console.log('=== DEBUG: Checking for duplicate buttons ===');
+
+
+    const addToCartButtons = document.querySelectorAll('button');
+    const cartButtons = Array.from(addToCartButtons).filter(btn =>
+        btn.textContent.includes('Add to Cart') ||
+        btn.getAttribute('onclick')?.includes('addToCart')
+    );
+
+    console.log('Total Add to Cart buttons found:', cartButtons.length);
+
+    cartButtons.forEach((btn, index) => {
+        console.log(`Button ${index + 1}:`, {
+            text: btn.textContent,
+            onclick: btn.getAttribute('onclick'),
+            parent: btn.closest('.card') ? 'Inside card' : 'Outside card'
+        });
+    });
+
+
+    console.log('addToCart function exists:', typeof addToCart === 'function');
+</script>

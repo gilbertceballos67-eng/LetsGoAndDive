@@ -1,0 +1,109 @@
+﻿@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Let's Go and Dive | Home";
+}
+
+<section class="text-white text-center d-flex align-items-center justify-content-center"
+         style="height: 75vh; background: linear-gradient(rgba(0,0,0,0.35), rgba(0,0,0,0.35)), url('/images/hero-bg.jpg') center/cover no-repeat;">
+    <div class="p-4 rounded-4">
+        <h1 class="display-4 fw-bold mb-3">Explore the Deep. Dive with Confidence.</h1>
+        <p class="lead mb-4">Premium diving bags and gear built for durability and style.</p>
+        <a asp-controller="Shop" asp-action="Index" class="btn btn-light btn-lg px-5 py-3">Shop Now</a>
+    </div>
+</section>
+
+
+<section class="py-5">
+    <div class="container">
+        <div class="row text-center g-4">
+            <div class="col-md-6">
+                <div class="p-4 border rounded">
+                    <i class="bi bi-award fs-1 mb-3"></i>
+                    <h5 class="fw-bold">Quality Assured</h5>
+                    <p class="text-muted small">Robust, water-resistant materials tested by divers.</p>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="p-4 border rounded">
+                    <i class="bi bi-people fs-1 mb-3"></i>
+                    <h5 class="fw-bold">Trusted by Divers</h5>
+                    <p class="text-muted small">Loved by beginners and professionals alike.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+<section class="py-5 bg-light">
+    <div class="container">
+        <h2 class="fw-bold text-center mb-4">Freediving Bag Showcase</h2>
+
+        <div class="row g-4 justify-content-center">
+            <div class="col-md-6 col-lg-4">
+                <div class="card shadow-sm border-0">
+                    <img src="~/images/ex_image1.png" class="card-img-top" alt="Two Compartments">
+                    <div class="card-body text-center">
+                        <h5 class="fw-bold">Two Spacious Compartments</h5>
+                        <p class="text-muted small mb-0">Separate sections for wet and dry gear.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-4">
+                <div class="card shadow-sm border-0">
+                    <img src="~/images/ex_image2.png" class="card-img-top" alt="Mesh Compartment">
+                    <div class="card-body text-center">
+                        <h5 class="fw-bold">Rubber Mesh Compartment</h5>
+                        <p class="text-muted small mb-0">Perfect for fins, mask, and snorkel.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-4">
+                <div class="card shadow-sm border-0">
+                    <img src="~/images/ex_image3.png" class="card-img-top" alt="Waterproof Compartment">
+                    <div class="card-body text-center">
+                        <h5 class="fw-bold">Waterproof Lining Inside</h5>
+                        <p class="text-muted small mb-0">Keeps clothes and dry essentials protected.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-4">
+                <div class="card shadow-sm border-0">
+                    <img src="~/images/ex_image5.png" class="card-img-top" alt="Back Pockets">
+                    <div class="card-body text-center">
+                        <h5 class="fw-bold">Two Back Pockets</h5>
+                        <p class="text-muted small mb-0">Extra space for small accessories or valuables.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-4">
+                <div class="card shadow-sm border-0">
+                    <img src="~/images/ex_image6.png" class="card-img-top" alt="Wearable Styles">
+                    <div class="card-body text-center">
+                        <h5 class="fw-bold">Multiple Carry Styles</h5>
+                        <p class="text-muted small mb-0">Use it as a backpack, sling, or hand carry bag.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="text-center mt-5">
+            <a asp-controller="Shop" asp-action="Index" class="btn btn-primary btn-lg px-5 py-3">
+                View More Diving Gear
+            </a>
+        </div>
+    </div>
+</section>
+
+
+<section class="py-5 text-center text-white" style="background-color:#0992ad;">
+    <div class="container">
+        <h3 class="fw-bold mb-2">Ready to Dive Deeper?</h3>
+        <p class="mb-3">Explore professional-grade diving gear for your next adventure.</p>
+        <a asp-controller="Shop" asp-action="Index" class="btn btn-light btn-lg">Start Shopping</a>
+    </div>
+</section>

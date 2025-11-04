@@ -1,0 +1,21 @@
+﻿@model LetdsGoAndDive.Models.DTOs.ItemTypeDTO
+@{
+    Layout = "_AdminLayout";
+}
+
+<div style="width:50%">
+    <h2>Add Item Type</h2>
+    <a asp-action="Index" asp-controller="ItemType" class="btn btn-primary">Back</a>
+
+    <form asp-action="AddItemType" method="post">
+        <div class="my-2">
+            <label>Item Type Name</label>
+            <input type="text" class="form-control" asp-for="ItemTypeName" />
+            <span asp-validation-for="ItemTypeName" class="text-danger"></span>
+        </div>
+
+        <div class="my-2">
+            <button type="submit" class="btn btn-info">Add</button>
+        </div>
+    </form>
+</div>

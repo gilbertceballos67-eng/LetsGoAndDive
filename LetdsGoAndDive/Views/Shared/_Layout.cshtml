@@ -1,0 +1,221 @@
+﻿@* Layout for Let's Go and Dive *@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>LetsGoAndDive</title>
+    <link href="/css/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.3.0/font/bootstrap-icons.css">
+    
+    <style>
+        footer a:hover {
+            color: #0992ad transition: color 0.3s ease;
+        }
+    </style>
+    <link href="/css/site.css" rel="stylesheet" />
+</head>
+<body class="d-flex flex-column min-vh-100 @(ViewData["BodyClass"])">
+
+
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg bg-primary navbar-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand d-flex align-items-center" asp-area="" asp-controller="Home" asp-action="Index" style="text-decoration:none;">
+                <img src="~/images/Logo.png" alt="Let's Go And Dive Logo"
+                     style="height:40px; width:auto; margin-right:10px; border-radius:8px; background-color:white; padding:3px; box-shadow:0 0 5px rgba(0,0,0,0.1);">
+                <span style="font-weight:700; font-size:1.25rem;  letter-spacing:0.5px;">
+                    Let's Go And Dive
+                </span>
+            </a>
+
+
+
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarColor01" aria-controls="navbarColor01" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarColor01">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <li class="nav-item">
+                        <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Home" && ViewContext.RouteData.Values["action"]?.ToString() == "Index" ? "active" : "")"
+                           asp-controller="Home" asp-action="Index">Home</a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Shop" ? "active" : "")"
+                           asp-controller="Shop" asp-action="Index">Shop</a>
+                    </li>
+
+                   
+
+                    @if (User.IsInRole(LetdsGoAndDive.Constants.Roles.Admin.ToString()))
+                    {
+                        <li class="nav-item">
+                            <a class="nav-link" href="/AdminOperations/AllOrders">Dashboard</a>
+                        </li>
+                    }
+                </ul>
+
+
+                @if (User.IsInRole("Admin"))
+                {
+                    <li class="nav-item">
+                        <a class="nav-link text-dark" asp-controller="AdminChat" asp-action="Index">Admin Chat</a>
+                    </li>
+                }
+                else if (User.Identity.IsAuthenticated)
+                {
+                    <li class="nav-item">
+                        <a class="nav-link text-dark" asp-controller="Chat" asp-action="Index">Chat with Admin</a>
+                    </li>
+                }
+
+
+
+                @*<button id="themeToggle" class="btn btn-outline-secondary ms-2">
+                    <i class="bi bi-moon"></i> Dark Mode
+                </button>*@
+
+                <partial name="_LoginPartial" />
+            </div>
+        </div>
+    </nav>
+
+    <!-- Notifications -->
+    <div class="container mt-3">
+        <partial name="_Notifications" />
+    </div>
+
+    <!-- Main Content -->
+    <main role="main" class="flex-grow-1 container my-4">
+        @RenderBody()
+    </main>
+
+    <!-- Footer -->
+    <footer class="text-center text-lg-start bg-dark text-white mt-auto">
+        <div class="container p-4">
+            <div class="row">
+
+                <!-- Company Info -->
+                <div class="col-lg-4 col-md-6 mb-4 mb-md-0">
+                    <h5 class="text-uppercase fw-bold">About Us</h5>
+                    <p>
+                        Your trusted partner for premium diving bags and underwater gear.
+                        We help every diver explore the deep with confidence, comfort, and style. 🌊
+                    </p>
+                </div>
+
+              
+
+            
+                <div class="col-lg-4 col-md-12 mb-4 mb-md-0">
+                    <h5 class="text-uppercase fw-bold">Get in Touch</h5>
+                    <p>Email: <a href="mailto:letsgoanddive@gmail.com" class="text-white">letsgoanddive@gmail.com</a></p>
+                    <p>Phone: 0917 977 4016</p>
+                    <div class="mt-3">
+                        <a href="https://www.facebook.com/Letsgoanddive" target="_blank" class="text-white me-3">
+                            <i class="bi bi-facebook fs-4"></i>
+                        </a>
+                        <a href="https://m.me/Letsgoanddive" target="_blank" class="text-white me-3">
+                            <i class="bi bi-messenger fs-4"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="text-center p-3 bg-secondary">
+            © @DateTime.Now.Year Let's Go and Dive. All rights reserved.
+        </div>
+    </footer>
+
+  
+
+    <!-- Scripts -->
+    @await RenderSectionAsync("Scripts", required: false)
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        // Load Cart Count
+        document.addEventListener("DOMContentLoaded", () => {
+            loadCartCount();
+        });
+
+        async function loadCartCount() {
+            try {
+                const response = await fetch(`/Cart/GetTotalItemInCart`, { credentials: "include" });
+                if (response.ok) {
+                    const count = await response.json();
+                    const cartCountEl = document.getElementById("cartCount");
+                    if (cartCountEl) cartCountEl.innerText = count;
+                }
+            } catch (err) {
+                console.error("Error fetching cart count:", err);
+            }
+        }
+
+        async function addToCart(productId) {
+            const qtyInput = document.getElementById(`qty-${productId}`);
+            const quantity = qtyInput ? parseInt(qtyInput.value) : 1;
+
+            if (quantity < 1) {
+                alert('Quantity must be at least 1');
+                return;
+            }
+
+            try {
+                const response = await fetch(`/Cart/AddItem?productId=${productId}&qty=${quantity}`, {
+                    method: "GET",
+                    credentials: "include"
+                });
+
+                if (response.status === 401 || response.redirected) {
+                    window.location.href = "/Identity/Account/Login";
+                    return;
+                }
+
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success) {
+                        const cartCountEl = document.getElementById("cartCount");
+                        if (cartCountEl) cartCountEl.innerText = data.count;
+                        alert('Product added to cart successfully!');
+                    } else {
+                        alert(data.message || "Failed to add to cart");
+                    }
+                } else {
+                    alert("Failed to add to cart");
+                }
+            } catch (error) {
+                console.error('Error adding to cart:', error);
+                alert('An error occurred while adding to cart');
+            }
+        }
+    </script>
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        const toggleButton = document.getElementById("themeToggle");
+        const currentTheme = localStorage.getItem("theme");
+
+        if (toggleButton) {
+            if (currentTheme === "dark") {
+                document.body.classList.add("dark-mode");
+                toggleButton.innerHTML = '<i class="bi bi-sun"></i> Light Mode';
+            }
+
+            toggleButton.addEventListener("click", () => {
+                document.body.classList.toggle("dark-mode");
+                const isDark = document.body.classList.contains("dark-mode");
+                localStorage.setItem("theme", isDark ? "dark" : "light");
+                toggleButton.innerHTML = isDark
+                    ? '<i class="bi bi-sun"></i> Light Mode'
+                    : '<i class="bi bi-moon"></i> Dark Mode';
+            });
+        }
+    </script>
+
+    }
+
+</body>
+</html>

@@ -1,0 +1,69 @@
+﻿@model LetdsGoAndDive.Models.Order
+
+<div class="container mt-4">
+    <div class="card shadow-lg border-0 rounded-4">
+        <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+            <h4 class="mb-0"><i class="bi bi-cash-stack me-2"></i> Update Order Status</h4>
+            <a asp-action="AllOrders" class="btn btn-outline-light btn-sm">
+                <i class="bi bi-arrow-left"></i> Back to Orders
+            </a>
+        </div>
+
+        <div class="card-body p-4">
+            <form asp-action="UpdateOrderStatus" method="post">
+                <input type="hidden" name="OrderId" value="@Model.Id" />
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Order Status</label>
+                    <select name="OrderStatusId" class="form-select form-select-lg" id="statusSelect">
+                        <option value="">Select Order Status</option>
+                        @foreach (var status in ViewBag.OrderStatusList as List<SelectListItem>)
+                        {
+                            <option value="@status.Value" selected="@(status.Selected ? "selected" : null)">
+                                @status.Text
+                            </option>
+                        }
+                    </select>
+                </div>
+
+             
+                <div class="mb-3" id="deliveryLinkContainer" style="display:none;">
+                    <label class="form-label fw-semibold">Delivery Tracking Link</label>
+                    <input name="DeliveryLink" value="@Model.DeliveryLink" class="form-control" placeholder="https://tracking.example.com/..." />
+
+                </div>
+
+                <div class="text-end mt-4">
+                    <button type="submit" class="btn btn-primary px-4">
+                        <i class="bi bi-save"></i> Update
+                    </button>
+                </div>
+
+                @if (TempData["msg"] != null)
+                {
+                    <div class="alert alert-info mt-3 text-center fw-semibold">
+                        @TempData["msg"]
+                    </div>
+                }
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const statusSelect = document.getElementById("statusSelect");
+            const deliveryLinkContainer = document.getElementById("deliveryLinkContainer");
+
+            function toggleDeliveryLink() {
+                const selectedText = statusSelect.options[statusSelect.selectedIndex]?.text;
+                deliveryLinkContainer.style.display =
+                    selectedText?.toLowerCase() === "shipped" ? "block" : "none";
+            }
+
+            statusSelect.addEventListener("change", toggleDeliveryLink);
+            toggleDeliveryLink(); 
+        });
+    </script>
+}

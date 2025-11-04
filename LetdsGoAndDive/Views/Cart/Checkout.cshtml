@@ -1,0 +1,121 @@
+﻿@model LetdsGoAndDive.Models.DTOs.CheckoutModel
+
+@{
+    ViewData["Title"] = "Checkout";
+}
+
+<h2>Checkout</h2>
+
+<form asp-action="Checkout" method="post" enctype="multipart/form-data" id="checkoutForm">
+    <div class="py-2">
+        <label asp-for="Name">Name*</label>
+        <input type="text" class="form-control" asp-for="Name" />
+        <span asp-validation-for="Name" class="text-danger"></span>
+    </div>
+
+    <div class="py-2">
+        <label asp-for="Email">Email*</label>
+        <input type="text" class="form-control" asp-for="Email" />
+        <span asp-validation-for="Email" class="text-danger"></span>
+    </div>
+
+    <div class="py-2">
+        <label asp-for="MobileNumber">Mobile Number*</label>
+        <input type="text" class="form-control" asp-for="MobileNumber" />
+        <span asp-validation-for="MobileNumber" class="text-danger"></span>
+    </div>
+
+    <div class="py-2">
+        <label asp-for="Address">Address*</label>
+        <textarea class="form-control" asp-for="Address" rows="5"></textarea>
+        <span asp-validation-for="Address" class="text-danger"></span>
+    </div>
+
+    <div class="py-2">
+        <label asp-for="PaymentMethod">Payment Method*</label>
+        <select asp-for="PaymentMethod" class="form-control" id="paymentMethod">
+            <option value="">Select Payment Method</option>
+            <option value="GCash">GCash</option>
+        </select>
+        <span asp-validation-for="PaymentMethod" class="text-danger"></span>
+    </div>
+
+    
+    <div id="gcashSection" style="display:none;" class="py-2">
+        <label><b>Scan QR to Pay:</b></label><br />
+        <img src="~/images/qr_code.jfif"
+             alt="GCash QR Code"
+             id="qrImage"
+             style="width:200px;height:auto;border:1px solid #ccc;border-radius:10px;cursor:pointer;" />
+        <p class="text-muted mt-2">Click the QR code to enlarge</p>
+    </div>
+
+   
+    <div id="proofUpload" style="display:none;" class="py-2">
+        <label>Upload Payment Proof*</label>
+        <input type="file" class="form-control" id="paymentProof" name="PaymentProofFile" accept="image/*" />
+        <span class="text-danger" id="proofError" style="display:none;">Payment proof is required.</span>
+    </div>
+
+    <div class="py-2">
+        <button type="submit" class="btn btn-info">Next</button>
+    </div>
+</form>
+
+
+<div id="qrModal"
+     style="display:none; position:fixed; top:0; left:0; width:100%; height:100%;
+            background:rgba(0,0,0,0.8); justify-content:center; align-items:center; z-index:9999;">
+    <img id="qrModalImage" src="" alt="QR Full View"
+         style="max-width:90%; max-height:90%; border-radius:10px; box-shadow:0 0 20px #fff;" />
+</div>
+
+@section Scripts {
+    <script>
+        const paymentSelect = document.getElementById("paymentMethod");
+        const gcashSection = document.getElementById("gcashSection");
+        const proofUpload = document.getElementById("proofUpload");
+        const form = document.getElementById("checkoutForm");
+        const proofInput = document.getElementById("paymentProof");
+        const proofError = document.getElementById("proofError");
+
+       
+        paymentSelect.addEventListener("change", function () {
+            if (this.value === "GCash") {
+                gcashSection.style.display = "block";
+                proofUpload.style.display = "block";
+            } else {
+                gcashSection.style.display = "none";
+                proofUpload.style.display = "none";
+            }
+        });
+
+     
+        form.addEventListener("submit", function (e) {
+            if (paymentSelect.value === "GCash") {
+                if (!proofInput.files.length) {
+                    e.preventDefault();
+                    proofError.style.display = "block";
+                    proofError.textContent = "Please upload proof of payment before proceeding.";
+                    proofInput.scrollIntoView({ behavior: "smooth" });
+                } else {
+                    proofError.style.display = "none";
+                }
+            }
+        });
+
+        
+        const qrImage = document.getElementById("qrImage");
+        const qrModal = document.getElementById("qrModal");
+        const qrModalImage = document.getElementById("qrModalImage");
+
+        qrImage.addEventListener("click", function () {
+            qrModalImage.src = this.src;
+            qrModal.style.display = "flex";
+        });
+
+        qrModal.addEventListener("click", function () {
+            qrModal.style.display = "none";
+        });
+    </script>
+}

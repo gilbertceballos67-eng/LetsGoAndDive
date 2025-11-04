@@ -1,0 +1,176 @@
+﻿/* 🌙 DARK MODE STYLES (ink black theme) */
+body.dark-mode {
+    background-color: #1e1e2e !important; /* soft dark ink black */
+    color: #e4e4e7 !important;
+}
+
+    /* Navbar */
+    body.dark-mode .navbar {
+        background-color: #2a2a3c !important; /* dark gray-blue tone */
+        border-bottom: 1px solid #3c3c4a;
+    }
+
+        body.dark-mode .navbar .nav-link,
+        body.dark-mode .navbar .navbar-brand,
+        body.dark-mode .navbar .nav-item a {
+            color: #f0f0f5 !important;
+        }
+
+            body.dark-mode .navbar .nav-link:hover,
+            body.dark-mode .navbar .navbar-brand:hover {
+                color: #9cc0ff !important;
+            }
+
+    /* Buttons */
+    body.dark-mode .btn-primary {
+        background-color: #3b82f6 !important;
+        border-color: #3b82f6 !important;
+    }
+
+    body.dark-mode .btn-outline-secondary {
+        color: #f0f0f5 !important;
+        border-color: #f0f0f5 !important;
+    }
+
+        body.dark-mode .btn-outline-secondary:hover {
+            background-color: #f0f0f5 !important;
+            color: #1e1e2e !important;
+        }
+
+    /* Cards, Forms, Inputs */
+    body.dark-mode .card,
+    body.dark-mode .form-control {
+        background-color: #2b2b3b !important;
+        color: #ffffff !important;
+        border-color: #3c3c4a !important;
+    }
+
+        body.dark-mode .form-control::placeholder {
+            color: #aaa !important;
+        }
+
+    /* Links */
+    body.dark-mode a {
+        color: #60a5fa !important;
+    }
+
+        body.dark-mode a:hover {
+            color: #93c5fd !important;
+        }
+
+    /* Footer */
+    body.dark-mode footer {
+        background-color: #252537 !important;
+        color: #cccccc !important;
+    }
+
+    /* Dropdown and Filter Buttons */
+    body.dark-mode select,
+    body.dark-mode input[type="text"] {
+        background-color: #2b2b3b !important;
+        color: #f5f5f5 !important;
+        border-color: #3c3c4a !important;
+    }
+
+  
+    body.dark-mode .table {
+        background-color: #2b2b3b !important; /* dark gray-blue tone for contrast */
+        color: #f5f5f5 !important;
+        border-color: #3c3c4a !important;
+    }
+
+        body.dark-mode .table th {
+            background-color: #33334d !important;
+            color: #ffffff !important;
+            border-color: #3c3c4a !important;
+        }
+
+        body.dark-mode .table td {
+            background-color: #2b2b3b !important;
+            color: #e4e4e7 !important;
+            border-color: #3c3c4a !important;
+        }
+
+        /* Optional: make images a bit brighter */
+        body.dark-mode .table img {
+            filter: brightness(1.15);
+        }
+
+
+        /* 🌙 Bootstrap Dark Mode Adjustments */
+body.dark-mode .navbar,
+body.dark-mode .bg-primary {
+    background-color: #1f2a44 !important; /* darker navy blue */
+}
+
+body.dark-mode .btn-primary {
+    background-color: #3b6ea5 !important; /* muted blue for dark mode */
+    border-color: #3b6ea5 !important;
+    color: #ffffff !important;
+}
+
+body.dark-mode .btn-primary:hover {
+    background-color: #4b7eb8 !important; /* lighter hover color */
+    border-color: #4b7eb8 !important;
+}
+
+body.dark-mode .btn-outline-secondary {
+    background-color: transparent !important;
+    color: #e4e4e7 !important;
+    border-color: #aaa !important;
+}
+
+body.dark-mode .btn-outline-secondary:hover {
+    background-color: #e4e4e7 !important;
+    color: #1f2a44 !important;
+}
+
+/* Navbar brand / links in dark mode */
+body.dark-mode .navbar .navbar-brand,
+body.dark-mode .navbar .nav-link {
+    color: #f0f0f5 !important;
+}
+
+body.dark-mode .navbar .nav-link:hover {
+    color: #93c5fd !important;
+}
+
+/* 🌤️ Manage Account Page Styling */
+.manage-sidebar .nav-link {
+    border-radius: 10px;
+    padding: 10px 15px;
+    font-weight: 500;
+    color: #333;
+    transition: all 0.2s ease-in-out;
+}
+
+    .manage-sidebar .nav-link.active,
+    .manage-sidebar .nav-link:hover {
+        background-color: #3b82f6;
+        color: white !important;
+    }
+
+.manage-content {
+    background-color: #ffffff;
+}
+
+/* 🌙 Dark Mode Support */
+body.dark-mode .manage-sidebar .nav-link {
+    color: #e4e4e7;
+}
+
+    body.dark-mode .manage-sidebar .nav-link.active,
+    body.dark-mode .manage-sidebar .nav-link:hover {
+        background-color: #3b6ea5;
+        color: #fff !important;
+    }
+
+body.dark-mode .manage-content {
+    background-color: #2b2b3b !important;
+    color: #f5f5f5 !important;
+}
+
+body.dark-mode .manage-sidebar .card {
+    background-color: #2b2b3b !important;
+    border-color: #3c3c4a !important;
+}
