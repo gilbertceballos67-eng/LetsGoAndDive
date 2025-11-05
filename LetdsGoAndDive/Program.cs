@@ -1,9 +1,7 @@
 ﻿using LetdsGoAndDive.Data;
 using Microsoft.AspNetCore.Identity;
-
 using Microsoft.EntityFrameworkCore;
 using Npgsql.EntityFrameworkCore.PostgreSQL;
-
 using LetdsGoAndDive.Repositories;
 using LetdsGoAndDive.Shared;
 using LetdsGoAndDive.Hubs;
@@ -22,12 +20,27 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 builder.Services.AddHttpContextAccessor();
 
+// ✅ Add CORS policy (must be BEFORE app.Build)
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("CorsPolicy", policy =>
+    {
+        policy.WithOrigins(
+            "https://letsgoanddive.onrender.com",
+            "https://localhost:7201"
+        )
+        .AllowAnyHeader()
+        .AllowAnyMethod()
+        .AllowCredentials();
+    });
+});
+
 builder.Services
     .AddIdentity<IdentityUser, IdentityRole>(options => options.SignIn.RequireConfirmedAccount = true)
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultUI()
-    .AddDefaultTokenProviders(); ;
-builder.Services.AddControllersWithViews();
+    .AddDefaultTokenProviders();
+
 builder.Services.AddTransient<IHomeRepository, HomeRepository>();
 builder.Services.AddTransient<ICartRepository, CartRepository>();
 builder.Services.AddTransient<IUserOrderRepository, UserOrderRepository>();
@@ -36,16 +49,13 @@ builder.Services.AddTransient<IItemTypeRepository, ItemTypeRepository>();
 builder.Services.AddScoped<IFileService, FileService>();
 builder.Services.AddScoped<IProductRepository, ProductRepository>();
 
-
-
-
 var app = builder.Build();
+
+
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
     await DbSeeder.SeedDefaultData(services);
-
-
 }
 
 
@@ -59,14 +69,11 @@ async Task RehashUserPasswordsAsync(IServiceProvider services)
     var users = await db.Users.ToListAsync();
     foreach (var user in users)
     {
-        // Try a few common passwords for testing (optional)
         var check = await signInManager.CheckPasswordSignInAsync(user, "Admin123!", false);
         if (check.Succeeded)
         {
-            // If it succeeds, Identity will automatically rehash next login.
-            // To force update now:
             await userManager.RemovePasswordAsync(user);
-            await userManager.AddPasswordAsync(user, "Admin123!"); // replace with actual password if known
+            await userManager.AddPasswordAsync(user, "Admin123!");
             Console.WriteLine($"✅ Rehashed: {user.Email}");
         }
     }
@@ -78,7 +85,6 @@ using (var scope = app.Services.CreateScope())
 }
 
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseMigrationsEndPoint();
@@ -86,7 +92,6 @@ if (app.Environment.IsDevelopment())
 else
 {
     app.UseExceptionHandler("/Home/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 
@@ -95,14 +100,19 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
+// ✅ Apply CORS before authentication
+app.UseCors("CorsPolicy");
+
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
+
 app.MapRazorPages();
 app.MapHub<ChatHub>("/chathub");
+
 if (app.Environment.IsDevelopment())
 {
     app.UseDeveloperExceptionPage();
