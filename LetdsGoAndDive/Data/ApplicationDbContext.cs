@@ -23,4 +23,8 @@ namespace LetdsGoAndDive.Data
 
         public DbSet<Message> Messages { get; set; }
     }
+
+
+
+
 }
