@@ -19,31 +19,35 @@
 <input type="text" id="messageInput" placeholder="Type your reply..." class="form-control mt-2" />
 <button id="sendButton" class="btn btn-success mt-2">Send</button>
 
-@section Scripts {
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js"></script>
-    <script>
-        const connection = new signalR.HubConnectionBuilder()
-            .withUrl("/chathub")
-            .build();
+<script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js"></script>
+<script>
+    const connection = new signalR.HubConnectionBuilder()
+        .withUrl("https://letsgoanddive.onrender.com/chathub", {
+            transport: signalR.HttpTransportType.ServerSentEvents | signalR.HttpTransportType.LongPolling
+        })
+        .configureLogging(signalR.LogLevel.Information)
+        .build();
 
-        connection.on("ReceiveMessage", function (user, message) {
-            const msg = document.createElement("div");
-            msg.innerHTML = `<strong>${user}:</strong> ${message}`;
-            document.getElementById("messagesList").appendChild(msg);
-        });
+    connection.on("ReceiveMessage", function (user, message) {
+        const msg = document.createElement("div");
+        msg.innerHTML = `<strong>${user}:</strong> ${message}`;
+        document.getElementById("messagesList").appendChild(msg);
+    });
 
-        connection.start().catch(err => console.error(err.toString()));
+    connection.start()
+        .then(() => console.log("✅ Connected to SignalR"))
+        .catch(err => console.error("❌ Connection error:", err.toString()));
 
-        document.getElementById("sendButton").addEventListener("click", function () {
-            const admin = "Admin";
-            const message = document.getElementById("messageInput").value;
-            const receiver = "@user";
+    document.getElementById("sendButton").addEventListener("click", function () {
+        const user = "@user" || "Admin";
+        const message = document.getElementById("messageInput").value;
+        const receiver = "@user" === "Admin" ? "Admin" : "@user";
 
-            if (message.trim() !== "") {
-                connection.invoke("SendMessage", admin, message, receiver)
-                    .catch(err => console.error(err.toString()));
-                document.getElementById("messageInput").value = "";
-            }
-        });
-    </script>
+        if (message.trim() !== "") {
+            connection.invoke("SendMessage", user, message, receiver)
+                .catch(err => console.error(err.toString()));
+            document.getElementById("messageInput").value = "";
+        }
+    });
+</script>
 }

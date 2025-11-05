@@ -99,8 +99,7 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseRouting();
-
-// ✅ Apply CORS before authentication
+app.UseWebSockets();
 app.UseCors("CorsPolicy");
 
 app.UseAuthentication();
