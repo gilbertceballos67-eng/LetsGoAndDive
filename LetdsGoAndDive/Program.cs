@@ -1,4 +1,4 @@
-using LetdsGoAndDive.Data;
+﻿using LetdsGoAndDive.Data;
 using Microsoft.AspNetCore.Identity;
 
 using Microsoft.EntityFrameworkCore;
@@ -44,6 +44,37 @@ using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
     await DbSeeder.SeedDefaultData(services);
+
+
+}
+
+
+async Task RehashUserPasswordsAsync(IServiceProvider services)
+{
+    using var scope = services.CreateScope();
+    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>();
+    var signInManager = scope.ServiceProvider.GetRequiredService<SignInManager<IdentityUser>>();
+    var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+    var users = await db.Users.ToListAsync();
+    foreach (var user in users)
+    {
+        // Try a few common passwords for testing (optional)
+        var check = await signInManager.CheckPasswordSignInAsync(user, "Admin123!", false);
+        if (check.Succeeded)
+        {
+            // If it succeeds, Identity will automatically rehash next login.
+            // To force update now:
+            await userManager.RemovePasswordAsync(user);
+            await userManager.AddPasswordAsync(user, "Admin123!"); // replace with actual password if known
+            Console.WriteLine($"✅ Rehashed: {user.Email}");
+        }
+    }
+}
+
+using (var scope = app.Services.CreateScope())
+{
+    await RehashUserPasswordsAsync(scope.ServiceProvider);
 }
 
 
