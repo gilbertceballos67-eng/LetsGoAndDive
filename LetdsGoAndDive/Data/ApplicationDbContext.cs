@@ -22,6 +22,16 @@ namespace LetdsGoAndDive.Data
         public DbSet<Stock> Stocks { get; set; }
 
         public DbSet<Message> Messages { get; set; }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+
+            modelBuilder.Entity<Message>()
+                .Property(m => m.SentAt)
+                .HasColumnType("timestamp with time zone"); // PostgreSQL-safe
+        }
+
     }
 
 

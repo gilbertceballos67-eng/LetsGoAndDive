@@ -1,8 +1,9 @@
-﻿using System;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace LetdsGoAndDive.Models
 {
+    [Table("Messages")] 
     public class Message
     {
         [Key]
@@ -17,6 +18,7 @@ namespace LetdsGoAndDive.Models
         [Required]
         public string Text { get; set; }
 
-        public DateTime SentAt { get; set; } = DateTime.Now;
+        public DateTime SentAt { get; set; } = DateTime.UtcNow;
+
     }
 }
