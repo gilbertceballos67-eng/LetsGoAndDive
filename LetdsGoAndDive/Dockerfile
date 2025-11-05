@@ -1,25 +1,29 @@
-#See https://aka.ms/containerfastmode to understand how Visual Studio uses this Dockerfile to build your images for faster debugging.
-
-#Depending on the operating system of the host machines(s) that will build or run the containers, the image specified in the FROM statement may need to be changed.
-#For more information, please see https://aka.ms/containercompat
-
-FROM mcr.microsoft.com/dotnet/aspnet:6.0 AS base
-WORKDIR /app
-EXPOSE 80
-EXPOSE 443
-
+# Build Stage
 FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build
 WORKDIR /src
+
+# Copy and restore dependencies
 COPY ["LetdsGoAndDive/LetdsGoAndDive.csproj", "LetdsGoAndDive/"]
 RUN dotnet restore "LetdsGoAndDive/LetdsGoAndDive.csproj"
+
+# Copy everything else and build
 COPY . .
 WORKDIR "/src/LetdsGoAndDive"
-RUN dotnet build "LetdsGoAndDive.csproj" -c Release -o /app/build
-
-FROM build AS publish
 RUN dotnet publish "LetdsGoAndDive.csproj" -c Release -o /app/publish /p:UseAppHost=false
 
-FROM base AS final
+# Runtime Stage
+FROM mcr.microsoft.com/dotnet/aspnet:6.0 AS final
 WORKDIR /app
-COPY --from=publish /app/publish .
+COPY --from=build /app/publish .
+
+# Render requires you to expose the port your app listens on.
+# By default, ASP.NET uses port 8080 in containers.
+EXPOSE 8080
+
+# Set ASP.NET Core to listen on Render's port
+ENV ASPNETCORE_URLS=http://+:8080
+ENV DOTNET_RUNNING_IN_CONTAINER=true
+ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false
+
+# Start the app
 ENTRYPOINT ["dotnet", "LetdsGoAndDive.dll"]
