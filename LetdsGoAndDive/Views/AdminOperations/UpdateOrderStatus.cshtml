@@ -29,7 +29,26 @@
              
                 <div class="mb-3" id="deliveryLinkContainer" style="display:none;">
                     <label class="form-label fw-semibold">Delivery Tracking Link</label>
-                    <input name="DeliveryLink" value="@Model.DeliveryLink" class="form-control" placeholder="https://tracking.example.com/..." />
+                    @{
+                        var link = Model.DeliveryLink;
+
+                       
+                        if (!string.IsNullOrEmpty(link) &&
+                        !(link.StartsWith("http://") || link.StartsWith("https://")))
+                        {
+                            link = "https://" + link;
+                        }
+                    }
+
+                    @if (!string.IsNullOrEmpty(link))
+                    {
+                        <a href="@link" target="_blank">Track Delivery</a>
+                    }
+                    else
+                    {
+                        <span>No delivery link yet.</span>
+                    }
+
 
                 </div>
 
