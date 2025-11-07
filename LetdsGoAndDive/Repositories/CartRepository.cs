@@ -13,18 +13,19 @@
     public class CartRepository : ICartRepository
     {
         private readonly ApplicationDbContext _db;
-        private readonly UserManager<IdentityUser> _userManager;
+        private readonly UserManager<ApplicationUser> _userManager;
+
         private readonly IHttpContextAccessor _httpcontextAccessor;
 
 
-        public CartRepository(ApplicationDbContext db, IHttpContextAccessor httpcontextAccessor,
-            UserManager<IdentityUser> userManager)
+        public CartRepository( ApplicationDbContext db,IHttpContextAccessor httpcontextAccessor, UserManager<ApplicationUser> userManager)
         {
             _db = db;
             _userManager = userManager;
             _httpcontextAccessor = httpcontextAccessor;
         }
-     
+
+
         public async Task<int> AddItem(int productId, int qty)
         {
             using var transaction = await _db.Database.BeginTransactionAsync();
@@ -131,23 +132,39 @@
 
                 if (cartItem is null)
                     throw new Exception("No items in cart");
-                else if (cartItem.Quanntity == 1)
-                    _db.CartDetails.Remove(cartItem);
-                else
-                    cartItem.Quanntity = cartItem.Quanntity - 1;
 
-                _db.SaveChanges();
+                var product = _db.Products
+                                 .Where(p => p.Id == productId)
+                                 .Select(p => new { p, p.Stock })
+                                 .FirstOrDefault()?.p;
+
+                if (cartItem.Quanntity == 1)
+                {
+                    _db.CartDetails.Remove(cartItem);
+                }
+                else
+                {
+                    cartItem.Quanntity -= 1;
+                }
+
+              
+                if (product?.Stock != null)
+                {
+                   
+                    product.Stock.Quantity += 1;
+                }
+
+                await _db.SaveChangesAsync();
             }
             catch (Exception ex)
             {
-                
+                Console.WriteLine($"Error removing item: {ex.Message}");
             }
+
             var cartItemCount = await GetCartItemCount(userId);
             return cartItemCount;
-
-
-
         }
+
         public async Task<Shoppingcart> GetUserCart(string userId)
         {
             return await _db.Shoppingcarts
@@ -192,6 +209,7 @@
             return count;
         }
 
+
         public async Task<Order> DoCheckout(CheckoutModel model)
         {
             using var transaction = await _db.Database.BeginTransactionAsync();
@@ -212,11 +230,37 @@
                 if (!cart.CartDetails.Any())
                     throw new InvalidOperationException("Cart is empty");
 
+                
+                var selectedItemsRaw = _httpcontextAccessor.HttpContext.Session.GetString("SelectedCheckoutItems");
+                List<int> selectedIds = new();
+
+                if (!string.IsNullOrEmpty(selectedItemsRaw))
+                {
+                    selectedIds = selectedItemsRaw.Split(',').Select(int.Parse).ToList();
+                    
+                    _httpcontextAccessor.HttpContext.Session.Remove("SelectedCheckoutItems");
+                }
+                else
+                {
+                    
+                    selectedIds = cart.CartDetails.Select(cd => cd.ProductId).ToList();
+                }
+
+                
+                var selectedCartItems = cart.CartDetails
+                    .Where(cd => selectedIds.Contains(cd.ProductId))
+                    .ToList();
+
+                if (!selectedCartItems.Any())
+                    throw new InvalidOperationException("No selected items to checkout");
+
+                
                 var pendingRecord = await _db.orderStatuses
                     .FirstOrDefaultAsync(s => s.StatusName == "Pending");
                 if (pendingRecord == null)
                     throw new InvalidOperationException("Order status does not have 'Pending' status");
 
+                
                 var order = new Order
                 {
                     UserId = userId,
@@ -234,7 +278,8 @@
                 _db.Orders.Add(order);
                 await _db.SaveChangesAsync();
 
-                foreach (var item in cart.CartDetails)
+               
+                foreach (var item in selectedCartItems)
                 {
                     var orderDetail = new OrderDetail
                     {
@@ -246,20 +291,22 @@
                     _db.OrderDetails.Add(orderDetail);
                 }
 
-                _db.CartDetails.RemoveRange(cart.CartDetails);
-                await _db.SaveChangesAsync();
+                
+                _db.CartDetails.RemoveRange(selectedCartItems);
 
+                await _db.SaveChangesAsync();
                 await transaction.CommitAsync();
 
-                return order; 
+                return order;
             }
             catch (Exception ex)
             {
                 await transaction.RollbackAsync();
                 throw new Exception($"Checkout failed: {ex.InnerException?.Message ?? ex.Message}");
-
             }
         }
+
+
 
         public async Task<Order?> GetOrderById(int orderId)
         {

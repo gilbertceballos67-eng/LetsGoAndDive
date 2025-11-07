@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace LetdsGoAndDive.Models
 {
-    [Table("Messages")] 
+    [Table("Messages")]
     public class Message
     {
         [Key]
@@ -19,6 +19,8 @@ namespace LetdsGoAndDive.Models
         public string Text { get; set; }
 
         public DateTime SentAt { get; set; } = DateTime.UtcNow;
+        public bool IsDeleted { get; set; } = false;
 
+        public bool IsRead { get; set; } = false;  
     }
 }

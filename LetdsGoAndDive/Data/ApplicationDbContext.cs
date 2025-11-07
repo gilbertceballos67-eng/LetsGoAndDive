@@ -4,15 +4,16 @@ using LetdsGoAndDive.Models;
 
 namespace LetdsGoAndDive.Data
 {
-    public class ApplicationDbContext : IdentityDbContext
+    public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
+
     {
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
             : base(options)
         {
         }
 
-        public DbSet <Product> Products { get; set; }
-        public DbSet <ItemType> ItemTypes { get; set; }
+        public DbSet<Product> Products { get; set; }
+        public DbSet<ItemType> ItemTypes { get; set; }
         public DbSet<Shoppingcart> Shoppingcarts { get; set; }
         public DbSet<CartDetail> CartDetails { get; set; }
         public DbSet<Order> Orders { get; set; }
@@ -23,18 +24,19 @@ namespace LetdsGoAndDive.Data
 
         public DbSet<Message> Messages { get; set; }
 
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
 
             modelBuilder.Entity<Message>()
                 .Property(m => m.SentAt)
-                .HasColumnType("timestamp with time zone"); // PostgreSQL-safe
+                .HasColumnType("timestamp with time zone");
+
         }
 
+
+
+
     }
-
-
-
-
 }

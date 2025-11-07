@@ -18,6 +18,8 @@ namespace LetdsGoAndDive.Models
         public ItemType ItemType { get; set; }
         public List<OrderDetail> OrderDetail { get; set; }
         public List<CartDetail> CartDetail { get; set; }
+        public string? Description { get; set; }
+
 
         public Stock Stock { get; set; }
         [NotMapped]

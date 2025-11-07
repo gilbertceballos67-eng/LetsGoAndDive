@@ -1,0 +1,34 @@
+﻿/* --- Cart Page Styles --- */
+.cart-container {
+    width: 90%;
+    margin: auto;
+}
+
+.cart-empty {
+    text-align: center;
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #444;
+    padding: 3rem 0;
+}
+
+.cart-table th, .cart-table td {
+    vertical-align: middle;
+    text-align: left;
+}
+
+.cart-table .checkbox-col {
+    width: 50px;
+    text-align: left;
+}
+
+.cart-table .total-col {
+    text-align: right;
+}
+
+.cart-total {
+    text-align: right;
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-top: 1rem;
+}

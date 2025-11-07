@@ -8,10 +8,10 @@
     ViewData["Title"] = "Home Page";
 }
 
+
 <div class="my-2">
     <form asp-action="Index" method="get" class="row row-cols-lg-auto g-3 align-items-center">
         <div class="col-12">
-            <label class="visually-hidden" for="sterm">Search</label>
             <div class="input-group">
                 <input type="text" name="sterm" id="sterm"
                        value="@Model.STerm"
@@ -21,97 +21,74 @@
         </div>
 
         <div class="col-12">
-            <label class="visually-hidden" for="itemtypeId">Item Type</label>
             <select class="form-select" id="itemtypeId" name="itemtypeId">
-                @if (Model.ItemTypeId == 0)
-                {
-                    <option value="0" selected="selected">All Item Types</option>
-                }
-                else
-                {
-                    <option value="0">All Item Types</option>
-                }
-
+                <option value="0" selected="@(Model.ItemTypeId == 0)">All Item Types</option>
                 @foreach (var itemtype in Model.ItemTypes ?? Enumerable.Empty<ItemType>())
                 {
-                    if (itemtype.Id == Model.ItemTypeId)
-                    {
-                        <option value="@itemtype.Id" selected="selected">@itemtype.ItemTypeName</option>
-                    }
-                    else
-                    {
-                        <option value="@itemtype.Id">@itemtype.ItemTypeName</option>
-                    }
+                    <option value="@itemtype.Id" selected="@(itemtype.Id == Model.ItemTypeId)">
+                        @itemtype.ItemTypeName
+                    </option>
                 }
             </select>
         </div>
 
         <div class="col-12">
             <button type="submit" class="btn btn-primary">Filter</button>
-            <a href="/Home/Index" class="btn btn-dark">Reset</a>
+            <a asp-action="Index" class="btn btn-dark">Reset</a>
         </div>
     </form>
 </div>
 
-<!-- Product cards - MAKE SURE THIS IS ONLY ONCE -->
-<div class="w-100 mt-4 d-flex flex-wrap">
-    @foreach (var product in Model.PagedProducts ?? Enumerable.Empty<Product>())
-
+<!-- Product Cards -->
+<div class="w-100 mt-4 d-flex flex-wrap justify-content-center gap-4">
+    @if (Model.PagedProducts != null && Model.PagedProducts.Any())
     {
-        <div class="card mx-2 mb-4" style="width: 17rem;">
-            @if (string.IsNullOrEmpty(product.Image))
-            {
+        foreach (var product in Model.PagedProducts)
+        {
+            <div class="card mx-2 mb-4 shadow" style="width: 17rem;">
                 <img style="width:100%;height:300px;object-fit:cover;"
-             src="@Url.Content("~/images/No_Image_Available.jpg")"
-             class="card-img-top" alt="No Image Available" />
-            }
-            else
-            {
-                <img style="width:100%;height:300px;object-fit:cover;"
-             src="@Url.Content($"~/images/{product.Image}")"
-             class="card-img-top" alt="@product.ProductName" />
-            }
+             src="@Url.Content(string.IsNullOrEmpty(product.Image) ? "~/images/No_Image_Available.jpg" : $"~/images/{product.Image}")"
+             class="card-img-top"
+             alt="@product.ProductName" />
 
-            <div class="card-body d-flex flex-column">
-                <h5 class="card-title">@product.ProductName</h5>
-                <p class="card-text">
-                    <b>Item Type:</b> @(product.ItemType?.ItemTypeName ?? "N/A")<br />
-                </p>
-                <p class="card-text">
-                    <b>Price:</b> ₱@product.Price.ToString("N2")
-                </p>
+                <div class="card-body d-flex flex-column">
+                    <h5 class="card-title">@product.ProductName</h5>
+                    <p class="card-text"><b>₱@product.Price.ToString("N2")</b></p>
 
-                @if (product.Quantity > 0)
-                {
-                    <div class="mt-auto">
-                        <div class="d-flex align-items-center mt-2">
-                            <input type="number" id="qty-@product.Id" value="1" min="1" max="@product.Quantity"
-                           class="form-control me-2" style="width: 80px;" />
-                            <button type="button" onclick="addToCart(@product.Id)" class="btn btn-primary">Add to Cart</button>
-                        </div>
-                        <p class="text-success mt-2 mb-0"><small>In stock: @product.Quantity</small></p>
-                    </div>
-                }
-                else
-                {
-                    <div class="mt-auto">
-                        <span class="badge bg-danger p-2 w-100">Out of stock</span>
-                    </div>
-                }
+                    @if (product.Quantity > 0)
+                    {
+                        <span class="badge bg-success mb-2">In Stock: @product.Quantity</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-danger mb-2">Out of Stock</span>
+                    }
+
+                    <button type="button"
+                    class="btn btn-outline-primary mt-auto"
+                    data-bs-toggle="modal"
+                    data-bs-target="#productModal"
+                    onclick="showProductDetails('@product.ProductName', '@product.ItemType?.ItemTypeName', '@(product.Description ?? "No description available.")', '@product.Price', '@Url.Content($"~/images/{product.Image}")', @product.Quantity, @product.Id)">
+                        View Details
+                    </button>
+                </div>
             </div>
+        }
+    }
+    else
+    {
+        <div class="alert alert-warning text-center p-4 w-75 mt-3" role="alert" style="font-size: 1.2rem;">
+            ⚠️ No products found matching your search. Try adjusting your filters or keywords.
         </div>
     }
 </div>
 
 
+
 <div class="d-flex justify-content-center mt-4">
     @Html.PagedListPager(
     Model.PagedProducts,
-    page => Url.Action("Index", new {
-    page,
-    sTerm = Model.STerm,
-    itemtypeId = Model.ItemTypeId
-    }),
+    page => Url.Action("Index", new { page, sTerm = Model.STerm, itemtypeId = Model.ItemTypeId }),
     new PagedListRenderOptions
     {
     DisplayLinkToFirstPage = PagedListDisplayMode.Always,
@@ -127,28 +104,183 @@
 </div>
 
 
+<div class="modal fade" id="productModal" tabindex="-1" aria-labelledby="productModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="productModalLabel">Product</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body">
+                <div class="row g-0">
+                    <div class="col-md-5 d-flex align-items-center justify-content-center p-3">
+                        <img id="modalImage" src="~/images/No_Image_Available.jpg" class="img-fluid rounded-start" alt="Product image" style="max-height:320px; object-fit:cover;">
+                    </div>
+
+                    <div class="col-md-7">
+                        <div class="card-body">
+                            <h5 id="modalProductName" class="card-title"></h5>
+                            <p id="modalItemType" class="text-muted mb-2"></p>
+
+                            <div id="modalDescription" class="mb-3" style="max-height:200px; overflow-y:auto;"></div>
+
+                            <p id="modalPrice" class="h5 mb-2"></p>
+                            <div id="modalStock" class="mb-3"></div>
+
+                            <div class="d-flex align-items-center gap-2">
+                                <input id="modalQty" type="number" min="1" value="1" class="form-control" style="width:100px;">
+                                <button id="addToCartBtn" class="btn btn-primary">Add to Cart</button>
+                                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Exit</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            
+            <div class="modal-footer">
+                <small class="text-muted">Please scan the QR and send proof of payment if paying via GCash.</small>
+            </div>
+        </div>
+    </div>
+</div>
 
 
 <script>
-    console.log('=== DEBUG: Checking for duplicate buttons ===');
+    let bsModal = null;
 
+    function showProductDetails(name, itemType, description, price, imageUrl, quantity, productId) {
+        const modalEl = document.getElementById('productModal');
+        if (!bsModal) bsModal = new bootstrap.Modal(modalEl, { keyboard: true });
 
-    const addToCartButtons = document.querySelectorAll('button');
-    const cartButtons = Array.from(addToCartButtons).filter(btn =>
-        btn.textContent.includes('Add to Cart') ||
-        btn.getAttribute('onclick')?.includes('addToCart')
-    );
+        // Fill modal info
+        document.getElementById('modalProductName').textContent = name ?? 'Product';
+        document.getElementById('modalItemType').textContent = 'Category: ' + (itemType ?? 'N/A');
+        document.getElementById('modalDescription').textContent = description ?? 'No description available.';
 
-    console.log('Total Add to Cart buttons found:', cartButtons.length);
+        const priceVal = Number(price) || 0;
+        document.getElementById('modalPrice').innerHTML =
+            "<b>₱" + priceVal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + "</b>";
 
-    cartButtons.forEach((btn, index) => {
-        console.log(`Button ${index + 1}:`, {
-            text: btn.textContent,
-            onclick: btn.getAttribute('onclick'),
-            parent: btn.closest('.card') ? 'Inside card' : 'Outside card'
+        const imgEl = document.getElementById('modalImage');
+        imgEl.src = imageUrl && imageUrl.trim() ? imageUrl : '/images/No_Image_Available.jpg';
+
+        // Stock info
+        const stockEl = document.getElementById('modalStock');
+        const qtyInput = document.getElementById('modalQty');
+        quantity = Number(quantity) || 0;
+
+        if (quantity > 0) {
+            stockEl.textContent = "In Stock: " + quantity;
+            stockEl.className = "badge bg-success mb-3";
+            qtyInput.max = quantity;
+            qtyInput.disabled = false;
+            document.getElementById('addToCartBtn').disabled = false;
+        } else {
+            stockEl.textContent = "Out of Stock";
+            stockEl.className = "badge bg-danger mb-3";
+            qtyInput.value = 0;
+            qtyInput.disabled = true;
+            document.getElementById('addToCartBtn').disabled = true;
+        }
+
+        const cartBtn = document.getElementById('addToCartBtn');
+        cartBtn.dataset.productId = productId;
+        cartBtn.dataset.available = quantity;
+
+        bsModal.show();
+    }
+
+    //  Reset modal when closed
+    document.addEventListener('DOMContentLoaded', function () {
+        const modalEl = document.getElementById('productModal');
+        if (modalEl) {
+            modalEl.addEventListener('hidden.bs.modal', function () {
+                // Reset modal content
+                document.getElementById('modalProductName').textContent = '';
+                document.getElementById('modalItemType').textContent = '';
+                document.getElementById('modalDescription').textContent = '';
+                document.getElementById('modalPrice').textContent = '';
+                document.getElementById('modalStock').textContent = '';
+                document.getElementById('modalImage').src = '/images/No_Image_Available.jpg';
+                document.getElementById('modalQty').value = 1;
+
+                const addBtn = document.getElementById('addToCartBtn');
+                if (addBtn) {
+                    addBtn.disabled = false;
+                    addBtn.dataset.productId = '';
+                    addBtn.dataset.available = '';
+                }
+
+                // Remove leftover backdrop if stuck
+                document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+                document.body.classList.remove('modal-open');
+                document.body.style.overflow = '';
+                document.body.style.paddingRight = '';
+            });
+        }
+    });
+
+    //  Add-to-cart logic
+    document.addEventListener('DOMContentLoaded', function () {
+        const cartBtn = document.getElementById('addToCartBtn');
+        if (!cartBtn) return;
+
+        cartBtn.addEventListener('click', async function () {
+            const productId = this.dataset.productId;
+            const available = Number(this.dataset.available || 0);
+            const qtyInput = document.getElementById('modalQty');
+            let qty = Number(qtyInput.value) || 1;
+            qty = Math.min(Math.max(qty, 1), available);
+
+            try {
+                const url = `/Cart/AddItem?productId=${encodeURIComponent(productId)}&qty=${encodeURIComponent(qty)}`;
+                const resp = await fetch(url, { method: 'GET', credentials: 'include' });
+                if (!resp.ok) return alert('Failed to add to cart.');
+
+                const data = await resp.json();
+                if (data.success) {
+                    try {
+                        const cntResp = await fetch('/Cart/GetTotalItemInCart', { credentials: 'include' });
+                        if (cntResp.ok) {
+                            const total = await cntResp.json();
+                            const cartCountEl = document.getElementById('cartCount');
+                            if (cartCountEl) cartCountEl.textContent = total;
+                        }
+                    } catch { }
+
+                    showTempAlert(`${qty} × item added to cart`, 'success');
+                    if (bsModal) bsModal.hide();
+                } else {
+                    showTempAlert('Error: ' + (data.message || 'Unable to add to cart'), 'danger');
+                }
+            } catch (err) {
+                console.error(err);
+                showTempAlert('Error adding to cart', 'danger');
+            }
         });
     });
 
-
-    console.log('addToCart function exists:', typeof addToCart === 'function');
+    //  Reusable toast
+    function showTempAlert(message, type = 'info', timeout = 2500) {
+        const wrapper = document.createElement('div');
+        wrapper.innerHTML = `
+              <div class="toast align-items-center text-bg-${type} border-0 show"
+                   role="alert" aria-live="assertive" aria-atomic="true"
+                   style="position:fixed; top:16px; right:16px; z-index:2000;">
+                <div class="d-flex">
+                  <div class="toast-body">${message}</div>
+                  <button type="button" class="btn-close btn-close-white me-2 m-auto"
+                          data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+              </div>`;
+        document.body.appendChild(wrapper);
+        const toastEl = wrapper.querySelector('.toast');
+        setTimeout(() => {
+            toastEl.classList.remove('show');
+            toastEl.classList.add('hide');
+            setTimeout(() => wrapper.remove(), 500);
+        }, timeout);
+    }
 </script>

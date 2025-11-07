@@ -5,44 +5,103 @@
 
 <h2>Products</h2>
 
-<a asp-action="AddProduct" asp-controller="Product" class="btn btn-primary">Add More</a>
+<a asp-action="AddProduct" asp-controller="Product" class="btn btn-primary mb-3">Add More</a>
 
-@if (Model?.Count() > 0)
+<form method="get" asp-action="Index" class="row g-2 mb-4 align-items-center">
+    <div class="col-md-4">
+        <input type="text" name="searchTerm" class="form-control" placeholder="Search product name..."
+               value="@ViewBag.SearchTerm" />
+    </div>
+
+    <div class="col-md-3">
+        <select name="itemTypeId" class="form-select">
+            @if (ViewBag.ItemTypeId == 0)
+            {
+                <option value="0" selected>All Item Types</option>
+            }
+            else
+            {
+                <option value="0">All Item Types</option>
+            }
+
+            @foreach (var type in ViewBag.ItemTypes)
+            {
+                if (type.Id == ViewBag.ItemTypeId)
+                {
+                    <option value="@type.Id" selected>@type.ItemTypeName</option>
+                }
+                else
+                {
+                    <option value="@type.Id">@type.ItemTypeName</option>
+                }
+            }
+        </select>
+    </div>
+
+    <div class="col-md-3">
+        <select name="sortOrder" class="form-select">
+            @if (ViewBag.SortOrder == "desc")
+            {
+                <option value="desc" selected>Highest Price</option>
+                <option value="asc">Lowest Price</option>
+            }
+            else if (ViewBag.SortOrder == "asc")
+            {
+                <option value="desc">Highest Price</option>
+                <option value="asc" selected>Lowest Price</option>
+            }
+            else
+            {
+                <option value="desc">Highest Price</option>
+                <option value="asc">Lowest Price</option>
+            }
+        </select>
+    </div>
+
+    <div class="col-md-2">
+        <button type="submit" class="btn btn-primary w-100">Filter</button>
+    </div>
+</form>
+
+@if (Model?.Any() == true)
 {
-    <table class="table table-striped my-2">
-        <tr>
-            <th>Image</th>
-            <th>Product</th>
-            <th>Item Type</th>
-            <th>Price</th>
-            <th>Action</th>
-        </tr>
-
-        @foreach (var product in Model)
-        {
+    <table class="table table-striped align-middle">
+        <thead class="table-light">
             <tr>
-                <td>
-                    @if (string.IsNullOrWhiteSpace(product.Image))
-                    {
-                        <img src="/Images/NoImage.png" style="width:80px;height:100px" alt="product image" />
-                    }
-                    else
-                    {
-                        <img src="/images/@product.Image" style="width:80px;height:100px" alt="product image" />
-                    }
-                </td>
-                <td>@product.ProductName</td>
-                <td>@product.ItemType?.ItemTypeName</td>
-                <td>@product.Price.ToString("C")</td>
-                <td>
-                    <a asp-action="UpdateProduct" asp-controller="Product" asp-route-id="@product.Id" class="btn btn-success">Edit</a>
-                    <a asp-action="DeleteProduct" asp-controller="Product" asp-route-id="@product.Id" class="btn btn-danger" onclick="return window.confirm('Are you sure?')">Delete</a>
-                </td>
+                <th>Image</th>
+                <th>Product</th>
+                <th>Item Type</th>
+                <th>Price</th>
+                <th style="width: 180px;">Action</th>
             </tr>
-        }
+        </thead>
+        <tbody>
+            @foreach (var product in Model)
+            {
+                <tr>
+                    <td>
+                        @if (string.IsNullOrWhiteSpace(product.Image))
+                        {
+                            <img src="/Images/NoImage.png" style="width:80px;height:100px" alt="product image" />
+                        }
+                        else
+                        {
+                            <img src="/images/@product.Image" style="width:80px;height:100px" alt="product image" />
+                        }
+                    </td>
+                    <td>@product.ProductName</td>
+                    <td>@product.ItemType?.ItemTypeName</td>
+                    <td>₱@product.Price.ToString("N2")</td>
+                    <td>
+                        <a asp-action="UpdateProduct" asp-controller="Product" asp-route-id="@product.Id" class="btn btn-success btn-sm">Edit</a>
+                        <a asp-action="DeleteProduct" asp-controller="Product" asp-route-id="@product.Id" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure?')">Delete</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
     </table>
 }
 else
 {
-    <h3>No records</h3>
+    <div class="alert alert-warning text-center">No products found.</div>
 }

@@ -26,30 +26,21 @@
                     </select>
                 </div>
 
-             
+                <!-- Delivery Link Input  -->
                 <div class="mb-3" id="deliveryLinkContainer" style="display:none;">
                     <label class="form-label fw-semibold">Delivery Tracking Link</label>
-                    @{
-                        var link = Model.DeliveryLink;
+                    <input type="text" name="DeliveryLink" class="form-control"
+                           value="@Model.DeliveryLink"
+                           placeholder="Enter delivery tracking link (e.g. https://jtexpress.ph/track?id=12345)" />
 
-                       
-                        if (!string.IsNullOrEmpty(link) &&
-                        !(link.StartsWith("http://") || link.StartsWith("https://")))
-                        {
-                            link = "https://" + link;
-                        }
-                    }
-
-                    @if (!string.IsNullOrEmpty(link))
+                    @if (!string.IsNullOrEmpty(Model.DeliveryLink))
                     {
-                        <a href="@link" target="_blank">Track Delivery</a>
+                        <div class="mt-2">
+                            <a href="@Model.DeliveryLink" target="_blank" class="btn btn-outline-primary btn-sm">
+                                <i class="bi bi-box-seam"></i> View Current Delivery Link
+                            </a>
+                        </div>
                     }
-                    else
-                    {
-                        <span>No delivery link yet.</span>
-                    }
-
-
                 </div>
 
                 <div class="text-end mt-4">
@@ -76,13 +67,13 @@
             const deliveryLinkContainer = document.getElementById("deliveryLinkContainer");
 
             function toggleDeliveryLink() {
-                const selectedText = statusSelect.options[statusSelect.selectedIndex]?.text;
+                const selectedText = statusSelect.options[statusSelect.selectedIndex]?.text?.toLowerCase();
                 deliveryLinkContainer.style.display =
-                    selectedText?.toLowerCase() === "shipped" ? "block" : "none";
+                    selectedText === "shipped" ? "block" : "none";
             }
 
             statusSelect.addEventListener("change", toggleDeliveryLink);
-            toggleDeliveryLink(); 
+            toggleDeliveryLink(); // check on page load
         });
     </script>
 }

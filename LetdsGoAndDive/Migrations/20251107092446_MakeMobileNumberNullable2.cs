@@ -4,7 +4,7 @@
 
 namespace LetdsGoAndDive.Migrations
 {
-    public partial class EnsureMessagesTable : Migration
+    public partial class MakeMobileNumberNullable2 : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {

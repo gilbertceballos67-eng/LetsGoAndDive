@@ -8,17 +8,16 @@ namespace LetdsGoAndDive.Repositories
     public class UserOrderRepository : IUserOrderRepository
     {
         private readonly ApplicationDbContext _db;
-        private readonly UserManager<IdentityUser> _userManager;
+        private readonly UserManager<ApplicationUser> _userManager;
         private readonly IHttpContextAccessor _httpcontextAccessor;
 
-        public UserOrderRepository(ApplicationDbContext db,
-                                   IHttpContextAccessor httpcontextAccessor,
-                                   UserManager<IdentityUser> userManager)
+        public UserOrderRepository( ApplicationDbContext db, IHttpContextAccessor httpcontextAccessor, UserManager<ApplicationUser> userManager)
         {
             _db = db;
             _httpcontextAccessor = httpcontextAccessor;
             _userManager = userManager;
         }
+
 
         public async Task ChangeOrderStatus(UpdateOrderStatusModel data)
         {

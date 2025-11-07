@@ -19,6 +19,9 @@ namespace LetdsGoAndDive.Models.DTOs
         public string? Image { get; set; }
         public IFormFile? ImageFile { get; set; }
 
+        public string? Description { get; set; }
+
+
         public IEnumerable<SelectListItem>? ItemTypeList { get; set; }
     }
 }

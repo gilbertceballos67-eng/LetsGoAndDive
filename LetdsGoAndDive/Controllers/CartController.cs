@@ -13,16 +13,17 @@ namespace LetdsGoAndDive.Controllers
     {
         private readonly ICartRepository _cartRepo;
         private readonly ApplicationDbContext _db;
-        private readonly UserManager<IdentityUser> _userManager;
+        private readonly UserManager<ApplicationUser> _userManager;
         private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public CartController(ICartRepository cartRepo, ApplicationDbContext db, UserManager<IdentityUser> userManager, IHttpContextAccessor httpContextAccessor)
+        public CartController(ICartRepository cartRepo, ApplicationDbContext db, UserManager<ApplicationUser> userManager, IHttpContextAccessor httpContextAccessor)
         {
             _cartRepo = cartRepo;
             _db = db;
             _userManager = userManager;
             _httpContextAccessor = httpContextAccessor;
         }
+
 
         [Authorize]
         private string GetUserrId()
@@ -37,8 +38,11 @@ namespace LetdsGoAndDive.Controllers
         {
             try
             {
-                var cartCount = await _cartRepo.AddItem(productId, qty);
-                return Json(new { success = true, count = cartCount });
+                await _cartRepo.AddItem(productId, qty);
+                int totalItems = await _cartRepo.GetCartItemCount(GetUserrId());
+
+                
+                return Json(new { success = true, totalItems });
             }
             catch (Exception ex)
             {
@@ -46,11 +50,23 @@ namespace LetdsGoAndDive.Controllers
             }
         }
 
+
+        [HttpGet]
+        [Authorize]
         public async Task<IActionResult> RemoveItem(int productId)
         {
-            await _cartRepo.RemoveItem(productId);
-            return RedirectToAction("GetUserCart");
+            try
+            {
+                await _cartRepo.RemoveItem(productId);
+                int totalItems = await _cartRepo.GetCartItemCount(GetUserrId());
+                return Json(new { success = true, totalItems });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
         }
+
         [Authorize]
         public async Task<IActionResult> GetUserCart()
         {
@@ -75,6 +91,34 @@ namespace LetdsGoAndDive.Controllers
 
             return View(cart);
         }
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ProceedSelectedCheckout([FromForm] int[] selectedItems)
+        {
+            if (selectedItems == null || selectedItems.Length == 0)
+            {
+                TempData["Error"] = "Please select at least one item to checkout.";
+                return RedirectToAction(nameof(GetUserCart));
+            }
+
+            var userId = _userManager.GetUserId(User);
+            if (string.IsNullOrEmpty(userId))
+                return RedirectToAction("Login", "Account");
+
+            var cart = await _cartRepo.GetUserCart(userId);
+            if (cart == null || cart.CartDetails == null)
+                return RedirectToAction(nameof(GetUserCart));
+
+            cart.CartDetails = cart.CartDetails
+                .Where(cd => selectedItems.Contains(cd.ProductId))
+                .ToList();
+
+            HttpContext.Session.SetString("SelectedCheckoutItems", string.Join(",", selectedItems));
+
+        
+            return RedirectToAction(nameof(Checkout));
+        }
+
 
         [AllowAnonymous]
         public async Task<IActionResult> GetTotalItemInCart()
@@ -87,10 +131,23 @@ namespace LetdsGoAndDive.Controllers
             return Ok(total);
         }
 
-        public IActionResult Checkout()
+        public async Task<IActionResult> Checkout()
         {
-            return View();
+            var user = await _userManager.GetUserAsync(User);
+
+            var model = new CheckoutModel();
+
+            if (user != null)
+            {
+                model.Name = user.FullName;
+                model.Email = user.Email;
+                model.MobileNumber = user.MobileNumber;
+                model.Address = user.Address;
+            }
+
+            return View(model);
         }
+
 
         [HttpPost]
         public async Task<IActionResult> CheckOut(CheckoutModel model, IFormFile? PaymentProofFile)

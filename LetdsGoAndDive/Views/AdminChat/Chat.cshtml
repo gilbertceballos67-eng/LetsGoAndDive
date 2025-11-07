@@ -19,35 +19,69 @@
 <input type="text" id="messageInput" placeholder="Type your reply..." class="form-control mt-2" />
 <button id="sendButton" class="btn btn-success mt-2">Send</button>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.16/signalr.min.js"></script>
 <script>
-    const connection = new signalR.HubConnectionBuilder()
-        .withUrl("https://letsgoanddive.onrender.com/chathub", {
-            transport: signalR.HttpTransportType.ServerSentEvents | signalR.HttpTransportType.LongPolling
-        })
-        .configureLogging(signalR.LogLevel.Information)
-        .build();
+    let connection;
+    let retryCount = 0;
+    const maxRetries = 5;
 
-    connection.on("ReceiveMessage", function (user, message) {
-        const msg = document.createElement("div");
-        msg.innerHTML = `<strong>${user}:</strong> ${message}`;
-        document.getElementById("messagesList").appendChild(msg);
-    });
+    async function initializeConnection() {
+        if (!connection) {
+            connection = new signalR.HubConnectionBuilder()
+                .withUrl("https://letsgoanddive.onrender.com/chathub", {
+                    transport: signalR.HttpTransportType.WebSockets | signalR.HttpTransportType.ServerSentEvents | signalR.HttpTransportType.LongPolling
+                })
+                .configureLogging(signalR.LogLevel.Information)
+                .build();
 
-    connection.start()
-        .then(() => console.log("✅ Connected to SignalR"))
-        .catch(err => console.error("❌ Connection error:", err.toString()));
+            connection.on("ReceiveMessage", function (sender, message) {
+                const msg = document.createElement("div");
+                msg.style.textAlign = sender === "Admin" ? "right" : "left";
+                msg.innerHTML = `<strong>${sender}:</strong> ${message} <br /><small class="text-muted">${new Date().toLocaleTimeString()}</small>`;
+                document.getElementById("messagesList").appendChild(msg);
+                document.getElementById("messagesList").scrollTop = document.getElementById("messagesList").scrollHeight;
+            });
 
-    document.getElementById("sendButton").addEventListener("click", function () {
-        const user = "@user" || "Admin";
+            try {
+                await connection.start();
+                console.log("✅ Connected to SignalR");
+                retryCount = 0;
+            } catch (err) {
+                console.error("❌ Connection failed:", err.toString());
+                if (retryCount < maxRetries) {
+                    retryCount++;
+                    console.log(`🔄 Retrying connection (${retryCount}/${maxRetries}) in 5 seconds...`);
+                    setTimeout(initializeConnection, 5000);
+                } else {
+                    console.error("🚫 Max retries reached. Stopping attempts.");
+                }
+            }
+        }
+    }
+
+    document.addEventListener("DOMContentLoaded", initializeConnection);
+
+    document.getElementById("sendButton").addEventListener("click", async function () {
+        const sender = "Admin";
         const message = document.getElementById("messageInput").value;
-        const receiver = "@user" === "Admin" ? "Admin" : "@user";
+        const receiver = "@user";
 
-        if (message.trim() !== "") {
-            connection.invoke("SendMessage", user, message, receiver)
-                .catch(err => console.error(err.toString()));
-            document.getElementById("messageInput").value = "";
+        if (message.trim() !== "" && connection && connection.state === signalR.HubConnectionState.Connected) {
+            try {
+                await connection.invoke("SendMessage", sender, message, receiver);
+                document.getElementById("messageInput").value = "";
+            } catch (err) {
+                console.error("Send failed:", err.toString());
+            }
+        } else {
+            console.warn("Connection not ready or message is empty. Cannot send.");
         }
     });
+
+    if (connection) {
+        connection.on("UpdateUnreadCount", function (count) {
+            
+        });
+    }
 </script>
-}

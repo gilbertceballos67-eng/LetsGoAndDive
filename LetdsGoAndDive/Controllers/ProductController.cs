@@ -22,11 +22,41 @@ namespace LetdsGoAndDive.Controllers
             _fileService = fileService;
         }
 
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string searchTerm = "", int itemTypeId = 0, string sortOrder = "desc")
         {
             var products = await _productRepo.GetProducts();
+            var itemTypes = await _itemTypeRepo.GetItemTypes();
+
+            
+            if (!string.IsNullOrWhiteSpace(searchTerm))
+            {
+                products = products
+                    .Where(p => p.ProductName.ToLower().Contains(searchTerm.ToLower()))
+                    .ToList();
+            }
+
+            
+            if (itemTypeId != 0)
+            {
+                products = products
+                    .Where(p => p.ItemTypeID == itemTypeId)
+                    .ToList();
+            }
+
+          
+            products = sortOrder == "asc"
+                ? products.OrderBy(p => p.Price).ToList()
+                : products.OrderByDescending(p => p.Price).ToList();
+
+            
+            ViewBag.ItemTypes = itemTypes;
+            ViewBag.SearchTerm = searchTerm;
+            ViewBag.ItemTypeId = itemTypeId;
+            ViewBag.SortOrder = sortOrder;
+
             return View(products);
         }
+
 
         public async Task<IActionResult> AddProduct()
         {
@@ -72,7 +102,8 @@ namespace LetdsGoAndDive.Controllers
                     ProductName = productToAdd.ProductName,
                     Image = productToAdd.Image,
                     ItemTypeID = productToAdd.ItemTypeID,
-                    Price = productToAdd.Price
+                    Price = productToAdd.Price,
+                    Description = productToAdd.Description
                 };
 
                 await _productRepo.AddProduct(product);
@@ -118,7 +149,9 @@ namespace LetdsGoAndDive.Controllers
                 ProductName = product.ProductName,
                 ItemTypeID = product.ItemTypeID,
                 Price = product.Price,
-                Image = product.Image
+                Image = product.Image,
+                Description = product.Description
+
             };
 
             return View(productToUpdate);
@@ -159,7 +192,9 @@ namespace LetdsGoAndDive.Controllers
                     ProductName = productToUpdate.ProductName,
                     ItemTypeID = productToUpdate.ItemTypeID,
                     Price = productToUpdate.Price,
-                    Image = productToUpdate.Image
+                    Image = productToUpdate.Image,
+                    Description = productToUpdate.Description
+
                 };
 
                 await _productRepo.UpdateProduct(product);

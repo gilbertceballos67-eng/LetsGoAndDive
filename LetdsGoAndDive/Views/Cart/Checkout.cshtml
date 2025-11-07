@@ -1,5 +1,4 @@
 ﻿@model LetdsGoAndDive.Models.DTOs.CheckoutModel
-
 @{
     ViewData["Title"] = "Checkout";
 }
@@ -8,7 +7,7 @@
 
 <form asp-action="Checkout" method="post" enctype="multipart/form-data" id="checkoutForm">
     <div class="py-2">
-        <label asp-for="Name">Name*</label>
+        <label asp-for="Name">Full Name*</label>
         <input type="text" class="form-control" asp-for="Name" />
         <span asp-validation-for="Name" class="text-danger"></span>
     </div>
@@ -27,7 +26,7 @@
 
     <div class="py-2">
         <label asp-for="Address">Address*</label>
-        <textarea class="form-control" asp-for="Address" rows="5"></textarea>
+        <textarea class="form-control" asp-for="Address" rows="3"></textarea>
         <span asp-validation-for="Address" class="text-danger"></span>
     </div>
 
@@ -40,7 +39,14 @@
         <span asp-validation-for="PaymentMethod" class="text-danger"></span>
     </div>
 
-    
+    <div id="paymentInstructions" class="py-2" style="display:none;">
+        <div class="alert alert-info">
+            <strong>GCash Payment Instructions:</strong><br />
+            Send your payment to <b>09XX-XXX-XXXX</b> (Let’s Go and Dive).<br />
+            After paying, please upload your payment proof below to confirm your order.
+        </div>
+    </div>
+
     <div id="gcashSection" style="display:none;" class="py-2">
         <label><b>Scan QR to Pay:</b></label><br />
         <img src="~/images/qr_code.jfif"
@@ -50,7 +56,6 @@
         <p class="text-muted mt-2">Click the QR code to enlarge</p>
     </div>
 
-   
     <div id="proofUpload" style="display:none;" class="py-2">
         <label>Upload Payment Proof*</label>
         <input type="file" class="form-control" id="paymentProof" name="PaymentProofFile" accept="image/*" />
@@ -75,22 +80,25 @@
         const paymentSelect = document.getElementById("paymentMethod");
         const gcashSection = document.getElementById("gcashSection");
         const proofUpload = document.getElementById("proofUpload");
+        const paymentInstructions = document.getElementById("paymentInstructions");
         const form = document.getElementById("checkoutForm");
         const proofInput = document.getElementById("paymentProof");
         const proofError = document.getElementById("proofError");
 
-       
+        // Show/hide payment UI
         paymentSelect.addEventListener("change", function () {
             if (this.value === "GCash") {
                 gcashSection.style.display = "block";
                 proofUpload.style.display = "block";
+                paymentInstructions.style.display = "block";
             } else {
                 gcashSection.style.display = "none";
                 proofUpload.style.display = "none";
+                paymentInstructions.style.display = "none";
             }
         });
 
-     
+        // Require proof for GCash
         form.addEventListener("submit", function (e) {
             if (paymentSelect.value === "GCash") {
                 if (!proofInput.files.length) {
@@ -104,7 +112,7 @@
             }
         });
 
-        
+        // QR full view modal
         const qrImage = document.getElementById("qrImage");
         const qrModal = document.getElementById("qrModal");
         const qrModalImage = document.getElementById("qrModalImage");

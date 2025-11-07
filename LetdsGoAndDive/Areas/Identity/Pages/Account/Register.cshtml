@@ -2,11 +2,9 @@
 @model RegisterModel
 @{
     ViewData["Title"] = "Register | Let's Go and Dive";
-    
 }
 
 <div class="d-flex justify-content-center align-items-center vh-100">
-
     <div class="card shadow-lg border-0" style="width: 420px; border-radius: 15px;">
         <div class="card-body p-5">
             <div class="text-center mb-4">
@@ -14,23 +12,50 @@
                 <p class="text-muted">Join Let's Go and Dive and explore the underwater world 🌊</p>
             </div>
 
-            <form id="registerForm" asp-route-returnUrl="@Model.ReturnUrl" method="post">
+            @if (TempData["RegisterSuccess"] != null)
+            {
+                <div class="alert alert-success text-center">@TempData["RegisterSuccess"]</div>
+            }
+            @if (TempData["RegisterError"] != null)
+            {
+                <div class="alert alert-danger text-center">@TempData["RegisterError"]</div>
+            }
+
+            <form id="registerForm" method="post">
                 <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
 
                 <div class="form-floating mb-3">
-                    <input asp-for="Input.Email" class="form-control" autocomplete="username" placeholder="Email address" />
+                    <input asp-for="Input.FullName" name="Input.FullName" class="form-control" placeholder="Full Name" />
+                    <label asp-for="Input.FullName">Full Name</label>
+                    <span asp-validation-for="Input.FullName" class="text-danger"></span>
+                </div>
+
+                <div class="form-floating mb-3">
+                    <input asp-for="Input.MobileNumber" name="Input.MobileNumber" class="form-control" placeholder="Mobile Number" />
+                    <label asp-for="Input.MobileNumber">Mobile Number</label>
+                    <span asp-validation-for="Input.MobileNumber" class="text-danger"></span>
+                </div>
+
+                <div class="form-floating mb-3">
+                    <input asp-for="Input.Address" name="Input.Address" class="form-control" placeholder="Address" />
+                    <label asp-for="Input.Address">Address</label>
+                    <span asp-validation-for="Input.Address" class="text-danger"></span>
+                </div>
+
+                <div class="form-floating mb-3">
+                    <input asp-for="Input.Email" name="Input.Email" class="form-control" autocomplete="username" placeholder="Email address" />
                     <label asp-for="Input.Email">Email address</label>
                     <span asp-validation-for="Input.Email" class="text-danger"></span>
                 </div>
 
                 <div class="form-floating mb-3">
-                    <input asp-for="Input.Password" class="form-control" autocomplete="new-password" placeholder="Password" type="password" />
+                    <input asp-for="Input.Password" name="Input.Password" class="form-control" autocomplete="new-password" placeholder="Password" type="password" />
                     <label asp-for="Input.Password">Password</label>
                     <span asp-validation-for="Input.Password" class="text-danger"></span>
                 </div>
 
                 <div class="form-floating mb-4">
-                    <input asp-for="Input.ConfirmPassword" class="form-control" autocomplete="new-password" placeholder="Confirm Password" type="password" />
+                    <input asp-for="Input.ConfirmPassword" name="Input.ConfirmPassword" class="form-control" autocomplete="new-password" placeholder="Confirm Password" type="password" />
                     <label asp-for="Input.ConfirmPassword">Confirm Password</label>
                     <span asp-validation-for="Input.ConfirmPassword" class="text-danger"></span>
                 </div>
@@ -38,20 +63,13 @@
                 <button id="registerSubmit" type="submit" class="btn btn-primary w-100 py-2 fw-semibold" style="border-radius: 10px;">
                     <i class="bi bi-person-plus me-2"></i>Create Account
                 </button>
-
-                <hr class="my-4" />
-
-                <div class="text-center">
-                    <p class="mb-1">Already have an account?</p>
-                    <a asp-page="./Login" asp-route-returnUrl="@Model.ReturnUrl" class="btn btn-outline-primary w-100 py-2" style="border-radius: 10px;">
-                        <i class="bi bi-box-arrow-in-right me-2"></i>Log in
-                    </a>
-                </div>
             </form>
         </div>
     </div>
 </div>
 
 @section Scripts {
-    <partial name="_ValidationScriptsPartial" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.5/jquery.validate.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validation-unobtrusive/4.0.0/jquery.validate.unobtrusive.min.js"></script>
 }
