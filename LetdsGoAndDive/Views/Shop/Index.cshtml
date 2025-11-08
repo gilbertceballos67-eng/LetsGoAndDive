@@ -1,6 +1,8 @@
 ﻿@using LetdsGoAndDive.Models
 @using X.PagedList
 @using X.PagedList.Mvc.Core
+@using System.Web
+
 
 @model HomeIndexModel
 @{
@@ -68,9 +70,17 @@
                     class="btn btn-outline-primary mt-auto"
                     data-bs-toggle="modal"
                     data-bs-target="#productModal"
-                    onclick="showProductDetails('@product.ProductName', '@product.ItemType?.ItemTypeName', '@(product.Description ?? "No description available.")', '@product.Price', '@Url.Content($"~/images/{product.Image}")', @product.Quantity, @product.Id)">
+                    onclick="showProductDetails(
+                        '@Html.Raw(HttpUtility.JavaScriptStringEncode(product.ProductName ?? ""))',
+                        '@Html.Raw(HttpUtility.JavaScriptStringEncode(product.ItemType?.ItemTypeName ?? ""))',
+                        '@Html.Raw(HttpUtility.JavaScriptStringEncode(product.Description ?? "No description available."))',
+                             '@product.Price',
+                        '@Url.Content($"~/images/{product.Image}")',
+                        @product.Quantity,
+                        @product.Id)">
                         View Details
                     </button>
+
                 </div>
             </div>
         }

@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace LetdsGoAndDive.Controllers
 {
-    [Authorize(Roles = nameof(Constants.Roles.Admin))]
+   
     public class UserOrderController : Controller
     {
         private readonly IUserOrderRepository _userOrderRepo;
@@ -18,6 +18,7 @@ namespace LetdsGoAndDive.Controllers
             return View(orders);
         }
 
+        [Authorize(Roles = nameof(Constants.Roles.Admin))]
         public async Task<IActionResult> CleanupOldOrders()
         {
             int deletedCount = await _userOrderRepo.PermanentlyDeleteOldOrders();
