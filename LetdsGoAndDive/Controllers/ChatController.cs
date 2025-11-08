@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.Identity;
 namespace LetdsGoAndDive.Controllers
 {
     [Authorize]  // Users must be logged in
-    public class ChatController : Controller  // Changed from UserChatController to ChatController
+    public class ChatController : Controller
     {
         private readonly ApplicationDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
@@ -20,30 +20,47 @@ namespace LetdsGoAndDive.Controllers
             _userManager = userManager;
         }
 
-        public async Task<IActionResult> Index()  
+        public async Task<IActionResult> Index()
         {
             var currentUser = await _userManager.GetUserAsync(User);
+            if (currentUser == null)
+                return RedirectToAction("Login", "Account");
+
             var userEmail = currentUser.Email;
 
-            // Mark unread messages as read (only for non-deleted ones)
+            // ✅ Fix 1: Match with "AdminGroup" (your Hub & Admin use this name)
             var unreadMessages = _context.Messages
-                .Where(m => m.Receiver == userEmail && m.Sender == "Admin" && !m.IsRead && !m.IsDeleted);
+                .Where(m => m.Receiver == userEmail && m.Sender == "AdminGroup" && !m.IsRead && !m.IsDeleted);
+
             foreach (var msg in unreadMessages)
-            {
                 msg.IsRead = true;
-            }
+
             await _context.SaveChangesAsync();
 
-            // Load only non-deleted messages for this user
+            // ✅ Fix 2: Also match with AdminGroup for message history
             var messages = await _context.Messages
                 .Where(m => !m.IsDeleted &&
-                            ((m.Sender == userEmail && m.Receiver == "Admin") ||
-                             (m.Sender == "Admin" && m.Receiver == userEmail)))
+                            ((m.Sender == userEmail && m.Receiver == "AdminGroup") ||
+                             (m.Sender == "AdminGroup" && m.Receiver == userEmail)))
                 .OrderBy(m => m.SentAt)
                 .ToListAsync();
 
-            ViewBag.User = userEmail;  // Pass user email for the view
-            return View(messages);  // Looks for Views/Chat/Index.cshtml
+            ViewBag.User = userEmail; // ✅ Ensure email goes to the view (SignalR group key)
+            return View(messages);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetUnreadCount()
+        {
+            var currentUser = await _userManager.GetUserAsync(User);
+            if (currentUser == null) return Json(0);
+
+            var userEmail = currentUser.Email;
+
+            int count = await _context.Messages
+                .CountAsync(m => m.Receiver == userEmail && !m.IsRead && !m.IsDeleted);
+
+            return Json(count);
         }
     }
 }

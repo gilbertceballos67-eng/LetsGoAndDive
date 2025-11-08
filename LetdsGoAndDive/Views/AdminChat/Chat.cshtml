@@ -1,4 +1,5 @@
 ﻿@model IEnumerable<LetdsGoAndDive.Models.Message>
+
 @{
     var user = ViewBag.User as string;
     ViewData["Title"] = "Chat with " + user;
@@ -9,79 +10,70 @@
 <div id="messagesList" style="height:400px; overflow-y:auto; border:1px solid #ccc; padding:10px;">
     @foreach (var msg in Model)
     {
-        <div style="@(msg.Sender == "Admin" ? "text-align:right;" : "text-align:left;")">
+        <div style="@(msg.Sender == "AdminGroup" ? "text-align:right;" : "text-align:left;")">
             <strong>@msg.Sender:</strong> @msg.Text <br />
             <small class="text-muted">@msg.SentAt.ToString("hh:mm tt")</small>
         </div>
     }
 </div>
 
-<input type="text" id="messageInput" placeholder="Type your reply..." class="form-control mt-2" />
-<button id="sendButton" class="btn btn-success mt-2">Send</button>
+<div class="input-group mt-3">
+    <input type="text" id="messageInput" placeholder="Type your reply..." class="form-control" />
+    <button id="sendButton" class="btn btn-success">Send</button>
+</div>
 
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.16/signalr.min.js"></script>
+<script src="~/lib/microsoft-signalr/signalr.min.js"></script>
 <script>
-    let connection;
-    let retryCount = 0;
-    const maxRetries = 5;
+    (() => {
+        const targetUser = "@user".trim();
 
-    async function initializeConnection() {
-        if (!connection) {
-            connection = new signalR.HubConnectionBuilder()
-                .withUrl("https://letsgoanddive.onrender.com/chathub", {
-                    transport: signalR.HttpTransportType.WebSockets | signalR.HttpTransportType.ServerSentEvents | signalR.HttpTransportType.LongPolling
-                })
-                .configureLogging(signalR.LogLevel.Information)
-                .build();
+        const connection = new signalR.HubConnectionBuilder()
+            .withUrl("/chathub") // ✅ fixed: relative path only
+            .withAutomaticReconnect()
+            .configureLogging(signalR.LogLevel.Information)
+            .build();
 
-            connection.on("ReceiveMessage", function (sender, message) {
-                const msg = document.createElement("div");
-                msg.style.textAlign = sender === "Admin" ? "right" : "left";
-                msg.innerHTML = `<strong>${sender}:</strong> ${message} <br /><small class="text-muted">${new Date().toLocaleTimeString()}</small>`;
-                document.getElementById("messagesList").appendChild(msg);
-                document.getElementById("messagesList").scrollTop = document.getElementById("messagesList").scrollHeight;
-            });
+        connection.on("ReceiveMessage", (sender, message) => {
+            const msg = document.createElement("div");
+            msg.style.textAlign = sender === "AdminGroup" ? "right" : "left";
+            msg.innerHTML = `<strong>${sender}:</strong> ${message}<br/><small>${new Date().toLocaleTimeString()}</small>`;
+            const list = document.getElementById("messagesList");
+            list.appendChild(msg);
+            list.scrollTop = list.scrollHeight;
+        });
 
+        connection.on("ConversationDeleted", (target) => {
+            if (target === targetUser) location.reload();
+        });
+
+        async function start() {
             try {
                 await connection.start();
-                console.log("✅ Connected to SignalR");
-                retryCount = 0;
+                console.log("✅ Connected as AdminGroup");
             } catch (err) {
-                console.error("❌ Connection failed:", err.toString());
-                if (retryCount < maxRetries) {
-                    retryCount++;
-                    console.log(`🔄 Retrying connection (${retryCount}/${maxRetries}) in 5 seconds...`);
-                    setTimeout(initializeConnection, 5000);
-                } else {
-                    console.error("🚫 Max retries reached. Stopping attempts.");
-                }
+                console.error("Connection failed:", err);
+                setTimeout(start, 2000);
             }
         }
-    }
 
-    document.addEventListener("DOMContentLoaded", initializeConnection);
+        document.addEventListener("DOMContentLoaded", start);
 
-    document.getElementById("sendButton").addEventListener("click", async function () {
-        const sender = "Admin";
-        const message = document.getElementById("messageInput").value;
-        const receiver = "@user";
-
-        if (message.trim() !== "" && connection && connection.state === signalR.HubConnectionState.Connected) {
+        document.getElementById("sendButton").addEventListener("click", async () => {
+            const message = document.getElementById("messageInput").value.trim();
+            if (!message) return;
             try {
-                await connection.invoke("SendMessage", sender, message, receiver);
+                await connection.invoke("SendMessage", "AdminGroup", message, targetUser);
                 document.getElementById("messageInput").value = "";
             } catch (err) {
-                console.error("Send failed:", err.toString());
+                console.error("Send failed:", err);
             }
-        } else {
-            console.warn("Connection not ready or message is empty. Cannot send.");
-        }
-    });
-
-    if (connection) {
-        connection.on("UpdateUnreadCount", function (count) {
-            
         });
-    }
+
+        document.getElementById("messageInput").addEventListener("keypress", e => {
+            if (e.key === "Enter") {
+                e.preventDefault();
+                document.getElementById("sendButton").click();
+            }
+        });
+    })();
 </script>

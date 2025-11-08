@@ -4,6 +4,8 @@ using LetdsGoAndDive.Data;
 using LetdsGoAndDive.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using System;
+using System.Linq;
 
 namespace LetdsGoAndDive.Hubs
 {
@@ -20,18 +22,48 @@ namespace LetdsGoAndDive.Hubs
 
         public override async Task OnConnectedAsync()
         {
-            var user = Context.User;
-            if (user.IsInRole("Admin"))
+            try
             {
-                await Groups.AddToGroupAsync(Context.ConnectionId, "Admin");
+                var user = Context.User;
+                string groupName = Context.ConnectionId;
+
+                if (user?.Identity?.IsAuthenticated == true)
+                {
+                    var currentUser = await _userManager.GetUserAsync(user);
+                    if (currentUser != null)
+                    {
+                        var isAdmin = await _userManager.IsInRoleAsync(currentUser, "Admin");
+                        if (isAdmin)
+                        {
+                            groupName = "AdminGroup";
+                        }
+                        else
+                        {
+                            groupName = currentUser.Email ?? currentUser.UserName ?? currentUser.Id;
+                        }
+                    }
+                }
+                else
+                {
+                    // anonymous fallback (for safety)
+                    groupName = Context.ConnectionId;
+                }
+
+                await Groups.AddToGroupAsync(Context.ConnectionId, groupName);
+                Console.WriteLine($"[ChatHub] Connected user={groupName} ConnID={Context.ConnectionId}");
             }
-            else
+            catch (Exception ex)
             {
-                var currentUser = await _userManager.GetUserAsync(user);
-                var userFullName = currentUser?.FullName ?? user.Identity.Name;
-                await Groups.AddToGroupAsync(Context.ConnectionId, userFullName);
+                Console.WriteLine($"[ChatHub.OnConnectedAsync] ERROR: {ex}");
             }
+
             await base.OnConnectedAsync();
+        }
+
+        public override async Task OnDisconnectedAsync(Exception? exception)
+        {
+            Console.WriteLine($"[ChatHub] Disconnected ConnID={Context.ConnectionId} Reason={exception?.Message}");
+            await base.OnDisconnectedAsync(exception);
         }
 
         public async Task SendMessage(string sender, string message, string receiver)
@@ -39,31 +71,73 @@ namespace LetdsGoAndDive.Hubs
             if (string.IsNullOrWhiteSpace(message))
                 return;
 
-            var msg = new Message
+            try
             {
-                Sender = sender,
-                Receiver = receiver,
-                Text = message,
-                IsRead = false  
-            };
+                // ✅ Save message in DB
+                var msg = new Message
+                {
+                    Sender = sender,
+                    Receiver = receiver,
+                    Text = message,
+                    IsRead = false,
+                    SentAt = DateTime.Now,
+                    IsDeleted = false
+                };
 
-            _context.Messages.Add(msg);
-            await _context.SaveChangesAsync();
-
-            
-            if (receiver == "Admin")
-            {
-                await Clients.Group("Admin").SendAsync("ReceiveMessage", sender, message);
-                
-                var adminUnreadCount = await _context.Messages.CountAsync(m => m.Receiver == "Admin" && !m.IsRead);
-                await Clients.Group("Admin").SendAsync("UpdateUnreadCount", adminUnreadCount);
+                _context.Messages.Add(msg);
+                await _context.SaveChangesAsync();
             }
-            else
+            catch (Exception ex)
             {
+                Console.WriteLine($"[ChatHub.SendMessage] DB error: {ex}");
+            }
+
+            try
+            {
+                // ✅ Ensure both sides receive messages in real-time
                 await Clients.Group(receiver).SendAsync("ReceiveMessage", sender, message);
-                
-                var userUnreadCount = await _context.Messages.CountAsync(m => m.Receiver == receiver && m.Sender == "Admin" && !m.IsRead);
-                await Clients.Group(receiver).SendAsync("UpdateUnreadCount", userUnreadCount);
+                await Clients.Group(sender).SendAsync("ReceiveMessage", sender, message);
+
+                Console.WriteLine($"[ChatHub] Message sent from {sender} to {receiver}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[ChatHub.SendMessage] SignalR send error: {ex}");
+            }
+        }
+
+        public async Task DeleteConversation(string targetReceiver)
+        {
+            try
+            {
+                var caller = Context.User;
+                var currentUser = caller != null ? await _userManager.GetUserAsync(caller) : null;
+                var isAdmin = currentUser != null && await _userManager.IsInRoleAsync(currentUser, "Admin");
+                if (!isAdmin)
+                    return;
+
+                // ✅ Soft delete messages
+                var toDelete = await _context.Messages
+                    .Where(m => m.Receiver == targetReceiver || m.Sender == targetReceiver)
+                    .ToListAsync();
+
+                if (toDelete.Any())
+                {
+                    foreach (var msg in toDelete)
+                        msg.IsDeleted = true;
+
+                    await _context.SaveChangesAsync();
+                }
+
+                // ✅ Notify both sides
+                await Clients.Group("AdminGroup").SendAsync("ConversationDeleted", targetReceiver);
+                await Clients.Group(targetReceiver).SendAsync("ConversationDeleted", targetReceiver);
+
+                Console.WriteLine($"[ChatHub] Deleted conversation with {targetReceiver}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[ChatHub.DeleteConversation] Error: {ex}");
             }
         }
     }

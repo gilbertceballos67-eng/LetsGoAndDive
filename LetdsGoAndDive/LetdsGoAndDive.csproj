@@ -46,6 +46,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="wwwroot\lib\microsoft-signalr\" />
     <Folder Include="wwwroot\uploads\payments\" />
   </ItemGroup>
 
