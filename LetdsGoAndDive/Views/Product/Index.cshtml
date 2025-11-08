@@ -1,4 +1,6 @@
-﻿@model IEnumerable<Product>
+﻿@model X.PagedList.IPagedList<Product>
+@using X.PagedList.Mvc.Core
+@using X.PagedList
 @{
     Layout = "_AdminLayout";
 }
@@ -100,6 +102,28 @@
             }
         </tbody>
     </table>
+
+    @if (Model.PageCount > 1)
+    {
+        <div class="d-flex justify-content-center mt-4">
+            @Html.PagedListPager(Model, page => Url.Action("Index", new
+    {
+                 page,
+                 searchTerm = ViewBag.SearchTerm,
+                 itemTypeId = ViewBag.ItemTypeId,
+                 sortOrder = ViewBag.SortOrder
+    }),
+      new PagedListRenderOptions
+    {
+                Display = PagedListDisplayMode.IfNeeded,
+                MaximumPageNumbersToDisplay = 5,
+                UlElementClasses = new[] { "pagination" },
+                LiElementClasses = new[] { "page-item" },
+                PageClasses = new[] { "page-link" }
+    })
+        </div>
+    }
+
 }
 else
 {

@@ -57,11 +57,12 @@ namespace LetdsGoAndDive.Repositories
         public async Task<IEnumerable<Order>> UserOrders(bool getAll = false)
         {
             var orders = _db.Orders
-                           .Include(x => x.OrderStatus)
-                           .Include(x => x.OrderDetail)
-                           .ThenInclude(x => x.Product)
-                           .ThenInclude(x => x.ItemType)
-                           .AsQueryable();
+                .Include(x => x.OrderStatus)
+                .Include(x => x.OrderDetail)
+                .ThenInclude(x => x.Product)
+                .ThenInclude(x => x.ItemType)
+                .Where(x => !x.IsDeleted) 
+                .AsQueryable();
 
             if (!getAll)
             {
@@ -74,6 +75,7 @@ namespace LetdsGoAndDive.Repositories
 
             return await orders.ToListAsync();
         }
+
 
         private string GetUserrId()
         {
@@ -90,12 +92,35 @@ namespace LetdsGoAndDive.Repositories
             if (order == null)
                 return false;
 
-            _db.OrderDetails.RemoveRange(order.OrderDetail);
-            _db.Orders.Remove(order);
+           
+            order.IsDeleted = true;
+            order.DeletedAt = DateTime.UtcNow;
 
+            _db.Orders.Update(order);
             await _db.SaveChangesAsync();
+
             return true;
         }
+
+        public async Task<int> PermanentlyDeleteOldOrders()
+        {
+            var cutoffDate = DateTime.UtcNow.AddMonths(-1); // older than 1 month
+
+            var oldOrders = await _db.Orders
+                .Include(o => o.OrderDetail)
+                .Where(o => o.IsDeleted && o.DeletedAt < cutoffDate)
+                .ToListAsync();
+
+            if (!oldOrders.Any())
+                return 0;
+
+            _db.OrderDetails.RemoveRange(oldOrders.SelectMany(o => o.OrderDetail));
+            _db.Orders.RemoveRange(oldOrders);
+
+            return await _db.SaveChangesAsync();
+        }
+
+
 
         public async Task UpdateOrder(Order order)
         {

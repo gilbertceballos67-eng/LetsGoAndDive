@@ -6,6 +6,7 @@
 
 <h2 class="text-center mb-4">📊 Sales Report Dashboard</h2>
 
+<!-- ✅ Alert Section -->
 <div class="mb-3">
     @if (TempData["success"] != null)
     {
@@ -21,31 +22,35 @@
     }
 </div>
 
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <form asp-action="Index" method="get" class="d-flex">
-        <select name="month" class="form-control">
+<!-- ✅ Filter + Actions -->
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+    <form asp-action="Index" method="get" class="d-flex flex-wrap gap-2">
+        <select name="month" class="form-select">
             <option value="">Select Month</option>
             @foreach (var month in ViewBag.Months)
             {
-                <option value="@month.Value" selected="@(month.Value == ViewBag.Month ? "selected" : null)">
+                <option value="@month.Value" selected="@(month.Value.ToString() == (ViewBag.Month?.ToString() ?? "") ? "selected" : null)">
                     @month.Text
                 </option>
             }
         </select>
-        <select name="year" class="form-control">
+
+        <select name="year" class="form-select">
             <option value="">Select Year</option>
             @foreach (var year in ViewBag.Years)
             {
-                <option value="@year" selected="@(year == ViewBag.Year ? "selected" : null)">
+                <option value="@year" selected="@(year.ToString() == (ViewBag.Year?.ToString() ?? "") ? "selected" : null)">
                     @year
                 </option>
             }
         </select>
+
         <button type="submit" class="btn btn-primary">📅 Filter</button>
     </form>
 
-    <div>
-        <form asp-action="ResetSales" method="post" class="d-inline" onsubmit="return confirm('Are you sure you want to reset sales for this period? This cannot be undone.');">
+    <div class="d-flex gap-2">
+        <form asp-action="ResetSales" method="post" class="d-inline"
+              onsubmit="return confirm('Are you sure you want to reset sales for this period? This cannot be undone.');">
             <input type="hidden" name="month" value="@ViewBag.Month" />
             <input type="hidden" name="year" value="@ViewBag.Year" />
             <button type="submit" class="btn btn-warning">🔁 Reset Sales</button>
@@ -55,8 +60,9 @@
     </div>
 </div>
 
-<table class="table table-bordered table-striped">
-    <thead class="table-dark">
+<!-- ✅ Sales Table -->
+<table class="table table-bordered table-striped align-middle">
+    <thead class="table-dark text-center">
         <tr>
             <th>Date</th>
             <th>Customer</th>
@@ -66,27 +72,104 @@
         </tr>
     </thead>
     <tbody>
-        @if (!Model.Any())
+        @if ((ViewBag.Month == null && ViewBag.Year == null))
         {
-            <tr><td colspan="5" class="text-center">No sales found for this period.</td></tr>
+            <tr><td colspan="5" class="text-center text-muted">Please select a month and/or year to view reports.</td></tr>
+        }
+        else if (ViewBag.Month != null && (Model == null || !Model.Any()))
+        {
+            <tr><td colspan="5" class="text-center text-muted">No report available for this month.</td></tr>
+        }
+        else if (Model == null || !Model.Any())
+        {
+            <tr><td colspan="5" class="text-center text-muted">No sales found for this period.</td></tr>
         }
         else
         {
-            @foreach (var order in Model)
+            foreach (var order in Model)
             {
                 var total = order.OrderDetail?.Sum(d => d.Quantity * d.UnitPrice) ?? 0;
                 <tr>
                     <td>@order.CreateDate.ToLocalTime().ToString("MM/dd/yyyy")</td>
-                    <td>@order.Name</td>
-                    <td>@order.OrderStatus?.StatusName</td>
-                    <td>@order.PaymentMethod</td>
-                    <td>₱@total.ToString("F2")</td>
+                    <td>@(string.IsNullOrEmpty(order.Name) ? "N/A" : order.Name)</td>
+                    <td>@(order.OrderStatus?.StatusName ?? "N/A")</td>
+                    <td>@(order.PaymentMethod ?? "N/A")</td>
+                    <td>₱@total.ToString("N2")</td>
                 </tr>
             }
         }
     </tbody>
 </table>
 
-<div class="text-end fw-bold fs-5 mt-3">
-    Total Sales: ₱@ViewBag.TotalSales.ToString("F2")
-</div>
+<!-- ✅ Total Sales -->
+@if (Model != null && Model.Any())
+{
+    <div class="text-end fw-bold fs-5 mt-3">
+        Total Sales: ₱@ViewBag.TotalSales.ToString("N2")
+    </div>
+}
+
+<hr class="my-4" />
+
+<!-- ✅ Yearly Sales Section -->
+<h4 class="mt-4 text-center">📆 Yearly Sales Summary</h4>
+
+@if (ViewBag.YearlySales != null && ViewBag.YearlySales.Count > 0)
+{
+    <table class="table table-bordered table-hover mt-3">
+        <thead class="table-dark text-center">
+            <tr>
+                <th>Year</th>
+                <th>Total Sales (₱)</th>
+            </tr>
+        </thead>
+        <tbody class="text-center">
+            @foreach (var item in ViewBag.YearlySales)
+            {
+                <tr>
+                    <td>@item.Year</td>
+                    <td>₱@item.Total.ToString("N2")</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <!-- ✅ Chart -->
+    <div class="mt-5">
+        <canvas id="yearlySalesChart" width="400" height="150"></canvas>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        const yearlyData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.YearlySales));
+        const ctx = document.getElementById('yearlySalesChart').getContext('2d');
+
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: yearlyData.map(x => x.Year),
+                datasets: [{
+                    label: 'Yearly Sales (₱)',
+                    data: yearlyData.map(x => x.Total),
+                    backgroundColor: '#007bff',
+                    borderRadius: 5
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { display: false },
+                    title: { display: true, text: 'Yearly Sales Overview', font: { size: 16 } }
+                },
+                scales: {
+                    y: { beginAtZero: true, title: { display: true, text: '₱ Amount' } },
+                    x: { title: { display: true, text: 'Year' } }
+                }
+            }
+        });
+    </script>
+}
+else
+{
+    <p class="text-center text-muted mt-3">No yearly sales data available.</p>
+}

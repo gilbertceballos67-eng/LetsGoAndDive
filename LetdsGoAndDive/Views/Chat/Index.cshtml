@@ -22,18 +22,20 @@
     <button id="sendButton" class="btn btn-primary">Send</button>
 </div>
 
+
+
 <script src="~/lib/microsoft-signalr/signalr.min.js"></script>
 <script>
     (() => {
+        
         const currentUser = "@user".trim();
-
         const connection = new signalR.HubConnectionBuilder()
-            .withUrl("/chathub") // ✅ fixed: relative path only
+            .withUrl("/chathub")
             .withAutomaticReconnect()
             .configureLogging(signalR.LogLevel.Information)
             .build();
-
-        connection.on("ReceiveMessage", (sender, message) => {
+        connection.on("receivemessage", (sender, message) => {
+            console.log("Received message from", sender, ":", message);  
             const msg = document.createElement("div");
             msg.style.textAlign = sender === currentUser ? "right" : "left";
             msg.innerHTML = `<strong>${sender}:</strong> ${message}<br/><small>${new Date().toLocaleTimeString()}</small>`;
@@ -41,20 +43,21 @@
             list.appendChild(msg);
             list.scrollTop = list.scrollHeight;
         });
-
-        connection.on("ConversationDeleted", (target) => {
+        connection.on("conversationdeleted", function (target) {  
             if (target === currentUser) {
-                alert("Your conversation was deleted by admin.");
-                location.reload();
+                alert("Your conversation was deleted by the admin.");
+                document.getElementById("messagesList").innerHTML = "";
             }
         });
-
         async function start() {
             try {
                 await connection.start();
-                console.log("✅ Connected as user:", currentUser);
+                console.log("✅ Connected as", currentUser);
+                
+                await connection.invoke("JoinGroup", currentUser);
             } catch (err) {
                 console.error("Connection failed:", err);
+                await connection.stop();
                 setTimeout(start, 2000);
             }
         }
@@ -65,14 +68,15 @@
             const message = document.getElementById("messageInput").value.trim();
             if (!message) return;
             try {
-                await connection.invoke("SendMessage", currentUser, message, "AdminGroup");
+                await connection.invoke("SendMessage", currentUser, message, "AdminGroup");  
                 document.getElementById("messageInput").value = "";
             } catch (err) {
                 console.error("Send failed:", err);
             }
         });
 
-        document.getElementById("messageInput").addEventListener("keypress", e => {
+        
+        document.getElementById("messageInput").addEventListener("keydown", (e) => {
             if (e.key === "Enter") {
                 e.preventDefault();
                 document.getElementById("sendButton").click();

@@ -10,6 +10,9 @@
         Task<bool> DeleteOrder(int orderId);
         Task UpdateOrder(Order order);
 
+        Task<int> PermanentlyDeleteOldOrders();
+
+
 
     }
 }

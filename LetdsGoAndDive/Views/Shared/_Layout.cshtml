@@ -231,10 +231,11 @@
         }
     </script>
 
-    
+
+   
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js"></script>
     <script>
-        
         async function loadUnreadCount() {
             const isAdmin = '@User.IsInRole("Admin")' === 'True';
             const url = isAdmin ? '/AdminChat/GetUnreadCount' : '/Chat/GetUnreadCount';
@@ -257,11 +258,14 @@
             }
         }
 
-        
+
         const connection = new signalR.HubConnectionBuilder()
-            .withUrl("https://letsgoanddive.onrender.com/chathub")
+            .withUrl("/chathub")
             .configureLogging(signalR.LogLevel.Information)
             .build();
+
+        // ✅ ADD: Dummy handler to suppress "receivemessage" warnings (global connection ignores chat)
+        connection.on("receivemessage", () => { /* Do nothing */ });
 
         connection.on("UpdateUnreadCount", function (count) {
             updateBadge(count);
@@ -270,10 +274,11 @@
         connection.start()
             .then(() => {
                 console.log("✅ Connected for notifications");
-                loadUnreadCount();  
+                loadUnreadCount();
             })
             .catch(err => console.error("❌ Notification connection error:", err));
     </script>
 
+  
 </body>
 </html>

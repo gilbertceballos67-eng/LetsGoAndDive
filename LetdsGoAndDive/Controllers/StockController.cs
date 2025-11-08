@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using X.PagedList;
+using X.PagedList.Extensions;
 
 namespace LetdsGoAndDive.Controllers
 {
@@ -14,10 +15,16 @@ namespace LetdsGoAndDive.Controllers
             _stockRepo = stockRepo;
         }
 
-        public async Task<IActionResult> Index(string sTerm = "")
+        public async Task<IActionResult> Index(string sTerm = "", int page = 1, int pageSize = 10)
         {
             var stocks = await _stockRepo.GetStocks(sTerm);
-            return View(stocks);
+
+            
+            var pagedStocks = stocks.ToPagedList(page, pageSize);
+
+            ViewBag.SearchTerm = sTerm;
+
+            return View(pagedStocks);
         }
 
         // GET

@@ -18,11 +18,23 @@ namespace LetdsGoAndDive.Controllers
             _userOrderRepository = userOrderRepository;
         }
 
-        public async Task<IActionResult> AllOrders()
+        public async Task<IActionResult> AllOrders(int page = 1, int pageSize = 8)
         {
             var orders = await _userOrderRepository.UserOrders(true);
-            return View(orders);
+
+            int totalItems = orders.Count();
+            var pagedOrders = orders
+                .OrderByDescending(o => o.CreateDate)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToList();
+
+            ViewBag.CurrentPage = page;
+            ViewBag.TotalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
+
+            return View(pagedOrders);
         }
+
 
         [HttpPost]
         public async Task<IActionResult> TogglePaymentStatus(int orderId)

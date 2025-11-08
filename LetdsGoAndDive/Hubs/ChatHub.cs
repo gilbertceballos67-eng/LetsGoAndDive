@@ -68,7 +68,7 @@ namespace LetdsGoAndDive.Hubs
 
         public async Task SendMessage(string sender, string message, string receiver)
         {
-            if (string.IsNullOrWhiteSpace(message))
+            if (string.IsNullOrWhiteSpace(message) || string.IsNullOrWhiteSpace(receiver))
                 return;
 
             try
@@ -79,31 +79,43 @@ namespace LetdsGoAndDive.Hubs
                     Sender = sender,
                     Receiver = receiver,
                     Text = message,
+                    SentAt = DateTime.UtcNow,
                     IsRead = false,
-                    SentAt = DateTime.Now,
                     IsDeleted = false
                 };
-
-                _context.Messages.Add(msg);
+                await _context.Messages.AddAsync(msg);
                 await _context.SaveChangesAsync();
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"[ChatHub.SendMessage] DB error: {ex}");
+                return;  // Don't send if save fails
             }
 
             try
             {
-                // ✅ Ensure both sides receive messages in real-time
-                await Clients.Group(receiver).SendAsync("ReceiveMessage", sender, message);
-                await Clients.Group(sender).SendAsync("ReceiveMessage", sender, message);
+                Console.WriteLine($"[ChatHub] Sending from {sender} to group: {receiver}");
+                // ✅ Send to receiver (main target) and sender (for echo)
+                await Clients.Group(receiver).SendAsync("receivemessage", sender, message);
+                await Clients.Group(sender).SendAsync("receivemessage", sender, message);
 
-                Console.WriteLine($"[ChatHub] Message sent from {sender} to {receiver}");
+                // ✅ Update unread count for receiver
+                var unreadCount = await _context.Messages.CountAsync(m => m.Receiver == receiver && !m.IsRead && !m.IsDeleted);
+                await Clients.Group(receiver).SendAsync("UpdateUnreadCount", unreadCount);
+
+                Console.WriteLine($"[ChatHub] Message sent successfully from {sender} to {receiver}");
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"[ChatHub.SendMessage] SignalR send error: {ex}");
             }
+        }
+
+
+        public async Task JoinGroup(string groupName)
+        {
+            await Groups.AddToGroupAsync(Context.ConnectionId, groupName);
+            Console.WriteLine($"[ChatHub] Manually joined group: {groupName} for ConnID={Context.ConnectionId}");
         }
 
         public async Task DeleteConversation(string targetReceiver)
@@ -130,8 +142,8 @@ namespace LetdsGoAndDive.Hubs
                 }
 
                 // ✅ Notify both sides
-                await Clients.Group("AdminGroup").SendAsync("ConversationDeleted", targetReceiver);
-                await Clients.Group(targetReceiver).SendAsync("ConversationDeleted", targetReceiver);
+                await Clients.Group("AdminGroup").SendAsync("conversationdeleted", targetReceiver);  
+                await Clients.Group(targetReceiver).SendAsync("conversationdeleted", targetReceiver);
 
                 Console.WriteLine($"[ChatHub] Deleted conversation with {targetReceiver}");
             }
@@ -139,6 +151,13 @@ namespace LetdsGoAndDive.Hubs
             {
                 Console.WriteLine($"[ChatHub.DeleteConversation] Error: {ex}");
             }
+        }
+
+
+        public async Task UpdateUnreadCount(string userEmail)
+        {
+            var count = await _context.Messages.CountAsync(m => m.Receiver == userEmail && !m.IsRead && !m.IsDeleted);
+            await Clients.Group(userEmail).SendAsync("UpdateUnreadCount", count);
         }
     }
 }

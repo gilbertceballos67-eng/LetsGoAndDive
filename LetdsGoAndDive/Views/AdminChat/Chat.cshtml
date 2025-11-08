@@ -22,18 +22,20 @@
     <button id="sendButton" class="btn btn-success">Send</button>
 </div>
 
+
+
 <script src="~/lib/microsoft-signalr/signalr.min.js"></script>
 <script>
     (() => {
         const targetUser = "@user".trim();
-
         const connection = new signalR.HubConnectionBuilder()
-            .withUrl("/chathub") // ✅ fixed: relative path only
+            .withUrl("/chathub")
             .withAutomaticReconnect()
             .configureLogging(signalR.LogLevel.Information)
             .build();
-
-        connection.on("ReceiveMessage", (sender, message) => {
+        connection.on("UpdateUnreadCount", () => { /* Do nothing */ });
+        connection.on("receivemessage", (sender, message) => {
+            console.log("Received message from", sender, ":", message);  // ✅ ADD: Debug log
             const msg = document.createElement("div");
             msg.style.textAlign = sender === "AdminGroup" ? "right" : "left";
             msg.innerHTML = `<strong>${sender}:</strong> ${message}<br/><small>${new Date().toLocaleTimeString()}</small>`;
@@ -41,22 +43,27 @@
             list.appendChild(msg);
             list.scrollTop = list.scrollHeight;
         });
-
-        connection.on("ConversationDeleted", (target) => {
-            if (target === targetUser) location.reload();
+        connection.on("conversationdeleted", function (target) {  
+            if (target === targetUser) {
+                alert("Conversation deleted.");
+                document.getElementById("messagesList").innerHTML = "";
+            }
         });
-
-        async function start() {
+        async function startConnection() {
             try {
                 await connection.start();
-                console.log("✅ Connected as AdminGroup");
+                console.log("Connected");
+                
+                await connection.invoke("JoinGroup", "AdminGroup");
             } catch (err) {
                 console.error("Connection failed:", err);
-                setTimeout(start, 2000);
+                await connection.stop();
+                setTimeout(startConnection, 5000);
             }
         }
 
-        document.addEventListener("DOMContentLoaded", start);
+        
+        document.addEventListener("DOMContentLoaded", startConnection);  
 
         document.getElementById("sendButton").addEventListener("click", async () => {
             const message = document.getElementById("messageInput").value.trim();
@@ -69,7 +76,8 @@
             }
         });
 
-        document.getElementById("messageInput").addEventListener("keypress", e => {
+        
+        document.getElementById("messageInput").addEventListener("keydown", (e) => {
             if (e.key === "Enter") {
                 e.preventDefault();
                 document.getElementById("sendButton").click();

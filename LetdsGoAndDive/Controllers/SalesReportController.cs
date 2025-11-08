@@ -10,7 +10,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using iTextSharp.text;
 using iTextSharp.text.pdf;
-using System.IO;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using System.Globalization;
 
 namespace LetdsGoAndDive.Controllers
 {
@@ -26,36 +27,78 @@ namespace LetdsGoAndDive.Controllers
             _logger = logger;
         }
 
-        // Dashboard view
-        public async Task<IActionResult> Index(int? month, int? year)
+
+        //  SALES DASHBOARD
+
+        public IActionResult Index(string month, string year)
         {
+         
+            ViewBag.Months = DateTimeFormatInfo
+                .InvariantInfo
+                .MonthNames
+                .Where(m => !string.IsNullOrEmpty(m))
+                .Select((m, i) => new SelectListItem
+                {
+                    Text = m,
+                    Value = (i + 1).ToString()
+                })
+                .ToList();
+
+          
+            var years = _context.Orders
+                .Select(o => o.CreateDate.Year)
+                .Distinct()
+                .OrderByDescending(y => y)
+                .ToList();
+            ViewBag.Years = years;
+
+           
             var orders = _context.Orders
                 .Include(o => o.OrderDetail)
                 .Include(o => o.OrderStatus)
-                .Where(o => !o.IsDeleted && o.IsPaid)
                 .AsQueryable();
 
-            if (month.HasValue && year.HasValue)
+
+            if (!string.IsNullOrEmpty(month))
             {
-                orders = orders.Where(o => o.CreateDate.Month == month && o.CreateDate.Year == year);
+                int monthNum = int.Parse(month);
+                orders = orders.Where(o => o.CreateDate.Month == monthNum);
+                ViewBag.Month = monthNum;
             }
 
-            var orderList = await orders.OrderByDescending(o => o.CreateDate).ToListAsync();
+            if (!string.IsNullOrEmpty(year))
+            {
+                int yearNum = int.Parse(year);
+                orders = orders.Where(o => o.CreateDate.Year == yearNum);
+                ViewBag.Year = yearNum;
+            }
+
+         
+            var orderList = orders.OrderByDescending(o => o.CreateDate).ToList();
+
+
+            decimal totalSales = orderList.Sum(o => o.OrderDetail.Sum(d => (decimal)(d.Quantity * d.UnitPrice)));
+
+            ViewBag.TotalSales = totalSales;
 
             
-            var totalSales = orderList.Sum(o => o.OrderDetail?.Sum(d => d.Quantity * d.UnitPrice) ?? 0);
+            ViewBag.YearlySales = _context.Orders
+                .Include(o => o.OrderDetail)
+                .GroupBy(o => o.CreateDate.Year)
+                .Select(g => new
+                {
+                    Year = g.Key,
+                    Total = g.Sum(o => o.OrderDetail.Sum(d => (decimal)(d.Quantity * d.UnitPrice)))
 
-            ViewBag.Month = month;
-            ViewBag.Year = year;
-            ViewBag.TotalSales = totalSales;
-            ViewBag.Months = Enumerable.Range(1, 12)
-                .Select(i => new { Value = i, Text = System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(i) })
+                })
+                .OrderBy(x => x.Year)
                 .ToList();
-            ViewBag.Years = Enumerable.Range(DateTime.Now.Year - 5, 6).Reverse().ToList();
 
             return View(orderList);
         }
 
+
+        //  EXPORT TO PDF
 
         public async Task<IActionResult> ExportToPdf(int? month, int? year)
         {
@@ -65,13 +108,23 @@ namespace LetdsGoAndDive.Controllers
                 .Where(o => !o.IsDeleted && o.IsPaid)
                 .AsQueryable();
 
-            if (month.HasValue && year.HasValue)
+       
+            if (year.HasValue)
             {
-                orders = orders.Where(o => o.CreateDate.Month == month && o.CreateDate.Year == year);
+                orders = orders.Where(o => o.CreateDate.Year == year);
+
+                if (month.HasValue && month.Value > 0)
+                    orders = orders.Where(o => o.CreateDate.Month == month);
             }
 
             var orderList = await orders.ToListAsync();
             double total = orderList.Sum(o => o.OrderDetail?.Sum(d => d.Quantity * d.UnitPrice) ?? 0);
+
+            if (!orderList.Any())
+            {
+                TempData["error"] = "No sales found for this selected period.";
+                return RedirectToAction(nameof(Index), new { month, year });
+            }
 
             using (MemoryStream stream = new MemoryStream())
             {
@@ -79,12 +132,17 @@ namespace LetdsGoAndDive.Controllers
                 PdfWriter writer = PdfWriter.GetInstance(pdfDoc, stream);
                 pdfDoc.Open();
 
-                // ================== HEADER ==================
+                // HEADER
                 var titleFont = FontFactory.GetFont("Helvetica", 18, Font.BOLD);
                 var subFont = FontFactory.GetFont("Helvetica", 12, Font.NORMAL);
                 var boldFont = FontFactory.GetFont("Helvetica", 12, Font.BOLD);
 
-                Paragraph title = new Paragraph("Let's Go and Dive\nMonthly Sales Report", titleFont)
+                string monthLabel = month.HasValue && month.Value > 0
+                    ? System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(month.Value)
+                    : "All Months";
+                string yearLabel = year?.ToString() ?? "All Years";
+
+                Paragraph title = new Paragraph($"Let's Go and Dive\nSales Report", titleFont)
                 {
                     Alignment = Element.ALIGN_CENTER,
                     SpacingAfter = 10f
@@ -92,30 +150,25 @@ namespace LetdsGoAndDive.Controllers
                 pdfDoc.Add(title);
 
                 Paragraph dateInfo = new Paragraph(
-                    $"Month: {(month.HasValue ? System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(month.Value) : "All")} / " +
-                    $"Year: {(year?.ToString() ?? "All")}\n" +
-                    $"Generated on: {DateTime.Now:MMMM dd, yyyy}\n\n",
+                    $"Month: {monthLabel} / Year: {yearLabel}\nGenerated on: {DateTime.Now:MMMM dd, yyyy}\n\n",
                     subFont
                 );
                 pdfDoc.Add(dateInfo);
 
-                // ============= LINE SEPARATOR (Manual for iTextSharp 5) =============
-                PdfPTable lineTable = new PdfPTable(1);
-                lineTable.WidthPercentage = 100;
+                // LINE SEPARATOR
+                PdfPTable lineTable = new PdfPTable(1) { WidthPercentage = 100 };
                 PdfPCell lineCell = new PdfPCell(new Phrase(""))
                 {
                     BorderWidthBottom = 1,
-                    BorderWidthTop = 0,
-                    BorderWidthLeft = 0,
-                    BorderWidthRight = 0,
                     BorderColorBottom = new BaseColor(150, 150, 150),
-                    FixedHeight = 5
+                    FixedHeight = 5,
+                    Border = Rectangle.BOTTOM_BORDER
                 };
                 lineTable.AddCell(lineCell);
                 pdfDoc.Add(lineTable);
                 pdfDoc.Add(new Paragraph(" "));
 
-                // ================== TABLE ==================
+                // TABLE
                 PdfPTable table = new PdfPTable(5)
                 {
                     WidthPercentage = 100,
@@ -124,15 +177,14 @@ namespace LetdsGoAndDive.Controllers
                 };
                 table.SetWidths(new float[] { 1.2f, 2.2f, 1.5f, 2f, 1.3f });
 
-                BaseColor headerColor = new BaseColor(33, 150, 243); // Blue
-                BaseColor altRowColor = new BaseColor(245, 245, 245); // Light gray
+                BaseColor headerColor = new BaseColor(33, 150, 243);
+                BaseColor altRowColor = new BaseColor(245, 245, 245);
                 BaseColor white = new BaseColor(255, 255, 255);
 
                 string[] headers = { "Date", "Customer", "Status", "Payment Method", "Total (₱)" };
                 foreach (string header in headers)
                 {
                     PdfPCell cell = new PdfPCell(new Phrase(header, FontFactory.GetFont("Helvetica", 11, Font.BOLD, white)))
-
                     {
                         BackgroundColor = headerColor,
                         HorizontalAlignment = Element.ALIGN_CENTER,
@@ -151,20 +203,20 @@ namespace LetdsGoAndDive.Controllers
                     table.AddCell(new PdfPCell(new Phrase(order.Name ?? "N/A", subFont)) { BackgroundColor = bg, Padding = 6 });
                     table.AddCell(new PdfPCell(new Phrase(order.OrderStatus?.StatusName ?? "Completed", subFont)) { BackgroundColor = bg, Padding = 6 });
                     table.AddCell(new PdfPCell(new Phrase(order.PaymentMethod ?? "N/A", subFont)) { BackgroundColor = bg, Padding = 6 });
-                    table.AddCell(new PdfPCell(new Phrase($"₱{orderTotal:F2}", subFont)) { BackgroundColor = bg, Padding = 6, HorizontalAlignment = Element.ALIGN_RIGHT });
+                    table.AddCell(new PdfPCell(new Phrase($"₱{orderTotal:N2}", subFont)) { BackgroundColor = bg, Padding = 6, HorizontalAlignment = Element.ALIGN_RIGHT });
                 }
 
                 pdfDoc.Add(table);
 
-                // ================== TOTAL ==================
-                Paragraph totalParagraph = new Paragraph($"Total Sales: ₱{total:F2}", boldFont)
+                // TOTAL
+                Paragraph totalParagraph = new Paragraph($"Total Sales: ₱{total:N2}", boldFont)
                 {
                     Alignment = Element.ALIGN_RIGHT,
                     SpacingBefore = 10f
                 };
                 pdfDoc.Add(totalParagraph);
 
-                // ================== FOOTER ==================
+                // FOOTER
                 pdfDoc.Add(new Paragraph("\nThank you for managing your sales with Let's Go and Dive!", subFont)
                 {
                     Alignment = Element.ALIGN_CENTER,
@@ -174,13 +226,14 @@ namespace LetdsGoAndDive.Controllers
                 pdfDoc.Close();
                 writer.Close();
 
-                return File(stream.ToArray(), "application/pdf", $"SalesReport_{month}_{year}.pdf");
+                string fileName = $"SalesReport_{monthLabel}_{yearLabel}.pdf";
+                return File(stream.ToArray(), "application/pdf", fileName);
             }
         }
 
-
-
-
+ 
+        //  RESET SALES
+ 
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ResetSales(int? month, int? year)

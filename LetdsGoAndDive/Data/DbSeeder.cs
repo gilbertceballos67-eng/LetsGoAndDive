@@ -53,10 +53,10 @@ namespace LetdsGoAndDive.Data
             {
                 context.orderStatuses.AddRange(
                     new OrderStatus { StatusId = 1, StatusName = "Pending" },
-                    new OrderStatus { StatusId = 2, StatusName = "Paid" },
-                    new OrderStatus { StatusId = 3, StatusName = "Shipped" },
-                    new OrderStatus { StatusId = 4, StatusName = "Delivered" },
-                    new OrderStatus { StatusId = 5, StatusName = "Cancelled" }
+                    
+                    new OrderStatus { StatusId = 2, StatusName = "Shipped" },
+                    new OrderStatus { StatusId = 3, StatusName = "Delivered" },
+                    new OrderStatus { StatusId = 4, StatusName = "Cancelled" }
                 );
                 await context.SaveChangesAsync();
             }

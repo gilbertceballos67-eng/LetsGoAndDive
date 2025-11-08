@@ -5,7 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.SignalR;  
+using Microsoft.AspNetCore.SignalR;
 using LetdsGoAndDive.Hubs;
 
 namespace LetdsGoAndDive.Controllers
@@ -22,37 +22,36 @@ namespace LetdsGoAndDive.Controllers
             _userManager = userManager;
         }
 
-        // ✅ Show list of users who messaged the admin
+        // ✅ FIXED: Now returns emails only (joins with Users to ensure validity)
         public async Task<IActionResult> Index()
         {
-            var users = await _context.Messages
+            var userEmails = await _context.Messages
                 .Where(m => m.Sender != "AdminGroup" && !m.IsDeleted)
-                .Select(m => new { Sender = m.Sender })
-                .Distinct()
-                .Join(_context.Users, m => m.Sender, u => u.Email, (m, u) => u.FullName ?? u.Email)
+                .Join(_context.Users, m => m.Sender, u => u.Email, (m, u) => u.Email)  // ✅ Ensures Sender matches a real Email
                 .Distinct()
                 .ToListAsync();
 
-            return View(users);
+            return View(userEmails);
         }
 
-        // ✅ Chat view for a selected user
+        // ✅ Chat view (unchanged, but now user param is always a valid email)
         public async Task<IActionResult> Chat(string user)
         {
             if (string.IsNullOrEmpty(user))
+            {
+                TempData["Error"] = "User email is required.";
                 return RedirectToAction("Index");
+            }
 
-            // Always resolve email (since SignalR uses email as unique key)
-            var userEmail = await _context.Users
-                .Where(u => u.FullName == user || u.Email == user || u.UserName == user)
-                .Select(u => u.Email)
-                .FirstOrDefaultAsync();
+            var userExists = await _context.Users.AnyAsync(u => u.Email == user);
+            if (!userExists)
+            {
+                TempData["Error"] = "User not found.";
+                return RedirectToAction("Index");
+            }
 
-            userEmail ??= user; // fallback if not found
-
-            // ✅ Mark unread as read
             var unreadMessages = await _context.Messages
-                .Where(m => m.Receiver == "AdminGroup" && m.Sender == userEmail && !m.IsRead && !m.IsDeleted)
+                .Where(m => m.Receiver == "AdminGroup" && m.Sender == user && !m.IsRead && !m.IsDeleted)
                 .ToListAsync();
 
             if (unreadMessages.Any())
@@ -63,19 +62,19 @@ namespace LetdsGoAndDive.Controllers
                 await _context.SaveChangesAsync();
             }
 
-            // ✅ Get full chat history (not deleted)
             var messages = await _context.Messages
                 .Where(m => !m.IsDeleted &&
-                            ((m.Sender == userEmail && m.Receiver == "AdminGroup") ||
-                             (m.Sender == "AdminGroup" && m.Receiver == userEmail)))
+                            ((m.Sender == user && m.Receiver == "AdminGroup") ||
+                             (m.Sender == "AdminGroup" && m.Receiver == user)))
                 .OrderBy(m => m.SentAt)
                 .ToListAsync();
 
-            ViewBag.User = userEmail;
+            ViewBag.User = user;
+            ViewBag.IsAdmin = true;
             return View(messages);
         }
 
-        // ✅ Return unread message count for admin dashboard
+        // ✅ Unchanged
         [HttpGet]
         public async Task<IActionResult> GetUnreadCount()
         {
@@ -85,15 +84,17 @@ namespace LetdsGoAndDive.Controllers
             return Json(count);
         }
 
-        // ✅ Delete conversation (mark all messages as deleted)
+        // ✅ Unchanged (already handles name/email mapping)
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConversation(string user)
         {
             if (string.IsNullOrWhiteSpace(user))
+            {
+                TempData["Error"] = "User is required.";
                 return RedirectToAction("Index");
+            }
 
-            // Get email properly
             var lowerUser = user.ToLowerInvariant();
             var userEmail = await _context.Users
                 .Where(u =>
@@ -103,9 +104,12 @@ namespace LetdsGoAndDive.Controllers
                 .Select(u => u.Email)
                 .FirstOrDefaultAsync();
 
-            userEmail ??= user;
+            if (string.IsNullOrEmpty(userEmail))
+            {
+                TempData["Error"] = "User not found.";
+                return RedirectToAction("Index");
+            }
 
-            // ✅ Soft delete all messages for that user
             var messages = await _context.Messages
                 .Where(m => (m.Sender == userEmail || m.Receiver == userEmail) && !m.IsDeleted)
                 .ToListAsync();
@@ -118,10 +122,10 @@ namespace LetdsGoAndDive.Controllers
                 await _context.SaveChangesAsync();
             }
 
-            // ✅ Optional: Notify connected clients
             var hubContext = HttpContext.RequestServices.GetRequiredService<IHubContext<ChatHub>>();
-            await hubContext.Clients.Group(userEmail).SendAsync("ConversationDeleted", userEmail);
+            await hubContext.Clients.Group(userEmail).SendAsync("conversationdeleted", userEmail);  // ✅ FIXED: Lowercase
 
+            TempData["Success"] = "Conversation deleted.";
             return RedirectToAction("Index");
         }
     }

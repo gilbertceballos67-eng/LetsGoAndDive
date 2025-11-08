@@ -14,7 +14,8 @@ namespace LetdsGoAndDive.Models
         [Required]
         public int OrderStatusId { get; set; }
         public bool IsDeleted { get; set; } = false;
-        
+        public DateTime? DeletedAt { get; set; }
+
         [MaxLength(30)]
         public string? Name { get; set; }
 

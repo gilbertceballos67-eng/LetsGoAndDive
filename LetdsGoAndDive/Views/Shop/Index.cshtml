@@ -84,24 +84,27 @@
 </div>
 
 
-
-<div class="d-flex justify-content-center mt-4">
-    @Html.PagedListPager(
+@if (Model.PagedProducts != null && Model.PagedProducts.TotalItemCount > Model.PagedProducts.PageSize)
+{
+    <div class="d-flex justify-content-center mt-4">
+        @Html.PagedListPager(
     Model.PagedProducts,
     page => Url.Action("Index", new { page, sTerm = Model.STerm, itemtypeId = Model.ItemTypeId }),
     new PagedListRenderOptions
     {
-    DisplayLinkToFirstPage = PagedListDisplayMode.Always,
-    DisplayLinkToLastPage = PagedListDisplayMode.Always,
-    DisplayLinkToPreviousPage = PagedListDisplayMode.Always,
-    DisplayLinkToNextPage = PagedListDisplayMode.Always,
-    MaximumPageNumbersToDisplay = 5,
-    UlElementClasses = new[] { "pagination" },
-    LiElementClasses = new[] { "page-item" },
-    PageClasses = new[] { "page-link" }
+           DisplayLinkToFirstPage = PagedListDisplayMode.Always,
+           DisplayLinkToLastPage = PagedListDisplayMode.Always,
+           DisplayLinkToPreviousPage = PagedListDisplayMode.Always,
+           DisplayLinkToNextPage = PagedListDisplayMode.Always,
+           MaximumPageNumbersToDisplay = 5,
+           UlElementClasses = new[] { "pagination" },
+           LiElementClasses = new[] { "page-item" },
+           PageClasses = new[] { "page-link" }
     }
     )
-</div>
+    </div>
+}
+
 
 
 <div class="modal fade" id="productModal" tabindex="-1" aria-labelledby="productModalLabel" aria-hidden="true">
@@ -138,7 +141,7 @@
                 </div>
             </div>
 
-            
+
             <div class="modal-footer">
                 <small class="text-muted">Please scan the QR and send proof of payment if paying via GCash.</small>
             </div>
@@ -266,15 +269,15 @@
     function showTempAlert(message, type = 'info', timeout = 2500) {
         const wrapper = document.createElement('div');
         wrapper.innerHTML = `
-              <div class="toast align-items-center text-bg-${type} border-0 show"
-                   role="alert" aria-live="assertive" aria-atomic="true"
-                   style="position:fixed; top:16px; right:16px; z-index:2000;">
-                <div class="d-flex">
-                  <div class="toast-body">${message}</div>
-                  <button type="button" class="btn-close btn-close-white me-2 m-auto"
-                          data-bs-dismiss="toast" aria-label="Close"></button>
-                </div>
-              </div>`;
+                  <div class="toast align-items-center text-bg-${type} border-0 show"
+                       role="alert" aria-live="assertive" aria-atomic="true"
+                       style="position:fixed; top:16px; right:16px; z-index:2000;">
+                    <div class="d-flex">
+                      <div class="toast-body">${message}</div>
+                      <button type="button" class="btn-close btn-close-white me-2 m-auto"
+                              data-bs-dismiss="toast" aria-label="Close"></button>
+                    </div>
+                  </div>`;
         document.body.appendChild(wrapper);
         const toastEl = wrapper.querySelector('.toast');
         setTimeout(() => {

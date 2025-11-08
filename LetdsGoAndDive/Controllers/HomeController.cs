@@ -25,7 +25,7 @@ namespace LetdsGoAndDive.Controllers
             var itemTypes = await _homeRepo.ItemTypes();
 
             
-            var pagedProducts = products.ToPagedList(page, 16);
+            var pagedProducts = products.ToPagedList(page, 10);
 
             var model = new HomeIndexModel
             {

@@ -30,7 +30,7 @@ builder.Services.AddCors(options =>
         policy
             .WithOrigins(
                 "https://letsgoanddive.onrender.com",
-                "https://localhost:7201"
+                "http://localhost:7201" // ❗Use http (not https) for local dev
             )
             .AllowAnyHeader()
             .AllowAnyMethod()
@@ -61,7 +61,7 @@ builder.Services.AddSession();
 
 var app = builder.Build();
 
-// ✅ Render reverse proxy headers (important for HTTPS)
+// ✅ Render reverse proxy headers (important for HTTPS and WebSockets)
 app.UseForwardedHeaders(new ForwardedHeadersOptions
 {
     ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
@@ -104,7 +104,7 @@ app.UseSession();
 // ✅ SignalR Hub registration
 app.MapHub<ChatHub>("/chathub", options =>
 {
-    // ✅ Use all transports, fallback if WebSocket unavailable
+    // ✅ Allow all transports (Render supports WebSocket but fallback is good)
     options.Transports = HttpTransportType.WebSockets |
                          HttpTransportType.ServerSentEvents |
                          HttpTransportType.LongPolling;

@@ -5,6 +5,8 @@ using LetdsGoAndDive.Shared;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using X.PagedList;
+using X.PagedList.Extensions;
 
 namespace LetdsGoAndDive.Controllers
 {
@@ -22,39 +24,33 @@ namespace LetdsGoAndDive.Controllers
             _fileService = fileService;
         }
 
-        public async Task<IActionResult> Index(string searchTerm = "", int itemTypeId = 0, string sortOrder = "desc")
+        public async Task<IActionResult> Index(string searchTerm = "", int itemTypeId = 0, string sortOrder = "desc", int page = 1)
         {
             var products = await _productRepo.GetProducts();
             var itemTypes = await _itemTypeRepo.GetItemTypes();
 
             
             if (!string.IsNullOrWhiteSpace(searchTerm))
-            {
-                products = products
-                    .Where(p => p.ProductName.ToLower().Contains(searchTerm.ToLower()))
-                    .ToList();
-            }
+                products = products.Where(p => p.ProductName.ToLower().Contains(searchTerm.ToLower())).ToList();
 
             
             if (itemTypeId != 0)
-            {
-                products = products
-                    .Where(p => p.ItemTypeID == itemTypeId)
-                    .ToList();
-            }
+                products = products.Where(p => p.ItemTypeID == itemTypeId).ToList();
 
-          
+            
             products = sortOrder == "asc"
                 ? products.OrderBy(p => p.Price).ToList()
                 : products.OrderByDescending(p => p.Price).ToList();
 
             
+            var pagedProducts = products.ToPagedList(page, 10);
+
             ViewBag.ItemTypes = itemTypes;
             ViewBag.SearchTerm = searchTerm;
             ViewBag.ItemTypeId = itemTypeId;
             ViewBag.SortOrder = sortOrder;
 
-            return View(products);
+            return View(pagedProducts); 
         }
 
 

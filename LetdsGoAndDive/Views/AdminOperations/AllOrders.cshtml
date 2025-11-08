@@ -5,6 +5,16 @@
     ViewData["Title"] = "All Orders";
 }
 
+<a asp-action="CleanupOldOrders" asp-controller="UserOrder" class="btn btn-danger mb-3">
+    <i class="bi bi-trash"></i> Clean Old Orders (30+ Days)
+</a>
+
+@if (TempData["msg"] != null)
+{
+    <div class="alert alert-info mt-3">@TempData["msg"]</div>
+}
+
+
 <div class="container mt-4">
     <h2>Orders</h2>
     <table class="table table-striped table-bordered align-middle text-center">
@@ -80,5 +90,35 @@
                 </tr>
             }
         </tbody>
+
+
+        @if (ViewBag.TotalPages > 1)
+        {
+            <nav class="d-flex justify-content-center mt-3">
+                <ul class="pagination">
+                    <li class="page-item @(ViewBag.CurrentPage == 1 ? "disabled" : "")">
+                        <a class="page-link" asp-action="AllOrders" asp-route-page="1">«</a>
+                    </li>
+                    <li class="page-item @(ViewBag.CurrentPage == 1 ? "disabled" : "")">
+                        <a class="page-link" asp-action="AllOrders" asp-route-page="@(ViewBag.CurrentPage - 1)">‹</a>
+                    </li>
+
+                    @for (int i = 1; i <= ViewBag.TotalPages; i++)
+                    {
+                        <li class="page-item @(i == ViewBag.CurrentPage ? "active" : "")">
+                            <a class="page-link" asp-action="AllOrders" asp-route-page="@i">@i</a>
+                        </li>
+                    }
+
+                    <li class="page-item @(ViewBag.CurrentPage == ViewBag.TotalPages ? "disabled" : "")">
+                        <a class="page-link" asp-action="AllOrders" asp-route-page="@(ViewBag.CurrentPage + 1)">›</a>
+                    </li>
+                    <li class="page-item @(ViewBag.CurrentPage == ViewBag.TotalPages ? "disabled" : "")">
+                        <a class="page-link" asp-action="AllOrders" asp-route-page="@ViewBag.TotalPages">»</a>
+                    </li>
+                </ul>
+            </nav>
+        }
+
     </table>
 </div>
