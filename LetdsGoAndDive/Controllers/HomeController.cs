@@ -39,16 +39,15 @@ namespace LetdsGoAndDive.Controllers
         }
 
 
-
-
-        public IActionResult Privacy()
-        {
-            return View();
-        }
-
         public IActionResult About()
         {
             return View();
         }
+
+        public IActionResult AccessFAQs()
+        {
+            return View();
+        }
+
     }
 }

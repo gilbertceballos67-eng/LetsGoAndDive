@@ -60,9 +60,7 @@
                             @foreach (var item in Model)
                             {
                                 <tr>
-                                    <td class="align-middle">
-                                        <strong>@item.ProductName</strong>
-                                    </td>
+                                    <td class="align-middle"><strong>@item.ProductName</strong></td>
                                     <td class="align-middle">
                                         <span class="fw-bold @(item.Quantity <= 0 ? "text-danger" : item.Quantity <= 10 ? "text-warning" : "text-success")">
                                             @item.Quantity
@@ -83,9 +81,7 @@
                                         }
                                     </td>
                                     <td class="text-center align-middle">
-                                        <a asp-action="ManageStock"
-                                   asp-controller="Stock"
-                                   asp-route-productId="@item.ProductId"
+                                        <a asp-action="ManageStock" asp-controller="Stock" asp-route-productId="@item.ProductId"
                                    class="btn btn-primary btn-sm">
                                             <i class="bi bi-pencil-square"></i> Update
                                         </a>
@@ -99,33 +95,45 @@
                 @if (Model.PageCount > 1)
                 {
                     <div class="d-flex justify-content-center my-3">
-                        @Html.PagedListPager(Model,  page => Url.Action("Index", new { page, sTerm = ViewBag.SearchTerm }),
-                        new PagedListRenderOptions
+                        @Html.PagedListPager(Model,
+                page => Url.Action("Index", new { page, sTerm = ViewBag.SearchTerm, filter = ViewBag.Filter }),
+                new PagedListRenderOptions
                 {
-                             DisplayLinkToFirstPage = PagedListDisplayMode.Always,
-                             DisplayLinkToLastPage = PagedListDisplayMode.Always,
-                             DisplayLinkToPreviousPage = PagedListDisplayMode.Always,
-                             DisplayLinkToNextPage = PagedListDisplayMode.Always,
-                             MaximumPageNumbersToDisplay = 5,
-                             UlElementClasses = new[] { "pagination" },
-                             LiElementClasses = new[] { "page-item" },
-                             PageClasses = new[] { "page-link" }
+                DisplayLinkToFirstPage = PagedListDisplayMode.Always,
+                DisplayLinkToLastPage = PagedListDisplayMode.Always,
+                DisplayLinkToPreviousPage = PagedListDisplayMode.Always,
+                DisplayLinkToNextPage = PagedListDisplayMode.Always,
+                MaximumPageNumbersToDisplay = 5,
+                UlElementClasses = new[] { "pagination" },
+                LiElementClasses = new[] { "page-item" },
+                PageClasses = new[] { "page-link" }
                 })
                     </div>
                 }
-
             }
             else
             {
                 <div class="text-center py-5">
                     <i class="bi bi-inbox display-1 text-muted"></i>
-                    <h4 class="text-muted mt-3">No products found</h4>
-                    <p class="text-muted">Try adjusting your search criteria or add new products.</p>
+                    <h4 class="text-muted mt-3">@ViewBag.EmptyMessage</h4>
+
+                    <p class="text-muted">
+                        @if (ViewBag.Filter == "all")
+                        {
+                            @:Try adjusting your search criteria or add new products.
+                        }
+                        else
+                        {
+                            @:You can go back to view all products.
+                        }
+                    </p>
+
                     <a asp-action="Index" asp-controller="Stock" class="btn btn-primary">
                         <i class="bi bi-arrow-clockwise"></i> Show All Products
                     </a>
                 </div>
             }
+
         </div>
     </div>
 
@@ -133,69 +141,84 @@
     @if (Model.Any())
     {
         <div class="row mt-4">
+            <!-- Total Items -->
             <div class="col-md-3">
-                <div class="card bg-primary text-white">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between">
-                            <div>
-                                <h4 class="card-title">@Model.Sum(x => x.Quantity)</h4>
-                                <p class="card-text">Total Items</p>
-                            </div>
-                            <div class="align-self-center">
-                                <i class="bi bi-box-seam display-6"></i>
+                <a asp-action="Index" asp-route-filter="all" class="text-decoration-none">
+                    <div class="card bg-primary text-white hover-card @(ViewBag.Filter == "all" ? "border border-light shadow-lg" : "")">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h4 class="card-title">@Model.Sum(x => x.Quantity)</h4>
+                                    <p class="card-text">Total Items</p>
+                                </div>
+                                <div class="align-self-center">
+                                    <i class="bi bi-box-seam display-6"></i>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
+                </a>
             </div>
+
+            <!-- Good Stock -->
             <div class="col-md-3">
-                <div class="card bg-success text-white">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between">
-                            <div>
-                                <h4 class="card-title">@Model.Count(x => x.Quantity > 10)</h4>
-                                <p class="card-text">Good Stock</p>
-                            </div>
-                            <div class="align-self-center">
-                                <i class="bi bi-check-circle display-6"></i>
+                <a asp-action="Index" asp-route-filter="good" class="text-decoration-none">
+                    <div class="card bg-success text-white hover-card @(ViewBag.Filter == "good" ? "border border-light shadow-lg" : "")">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h4 class="card-title">@Model.Count(x => x.Quantity > 10)</h4>
+                                    <p class="card-text">Good Stock</p>
+                                </div>
+                                <div class="align-self-center">
+                                    <i class="bi bi-check-circle display-6"></i>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
+                </a>
             </div>
+
+            <!-- Low Stock -->
             <div class="col-md-3">
-                <div class="card bg-warning text-dark">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between">
-                            <div>
-                                <h4 class="card-title">@Model.Count(x => x.Quantity > 0 && x.Quantity <= 10)</h4>
-                                <p class="card-text">Low Stock</p>
-                            </div>
-                            <div class="align-self-center">
-                                <i class="bi bi-exclamation-triangle display-6"></i>
+                <a asp-action="Index" asp-route-filter="low" class="text-decoration-none">
+                    <div class="card bg-warning text-dark hover-card @(ViewBag.Filter == "low" ? "border border-dark shadow-lg" : "")">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h4 class="card-title">@Model.Count(x => x.Quantity > 0 && x.Quantity <= 10)</h4>
+                                    <p class="card-text">Low Stock</p>
+                                </div>
+                                <div class="align-self-center">
+                                    <i class="bi bi-exclamation-triangle display-6"></i>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
+                </a>
             </div>
+
+            <!-- Out of Stock -->
             <div class="col-md-3">
-                <div class="card bg-danger text-white">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between">
-                            <div>
-                                <h4 class="card-title">@Model.Count(x => x.Quantity <= 0)</h4>
-                                <p class="card-text">Out of Stock</p>
-                            </div>
-                            <div class="align-self-center">
-                                <i class="bi bi-x-circle display-6"></i>
+                <a asp-action="Index" asp-route-filter="out" class="text-decoration-none">
+                    <div class="card bg-danger text-white hover-card @(ViewBag.Filter == "out" ? "border border-light shadow-lg" : "")">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h4 class="card-title">@Model.Count(x => x.Quantity <= 0)</h4>
+                                    <p class="card-text">Out of Stock</p>
+                                </div>
+                                <div class="align-self-center">
+                                    <i class="bi bi-x-circle display-6"></i>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
+                </a>
             </div>
         </div>
     }
-</div>
+
 
 
 

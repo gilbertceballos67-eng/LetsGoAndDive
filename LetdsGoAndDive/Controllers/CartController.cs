@@ -5,6 +5,8 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
 using LetdsGoAndDive.Data;
+using LetdsGoAndDive.Hubs;
+using Microsoft.AspNetCore.SignalR;
 
 namespace LetdsGoAndDive.Controllers
 {
@@ -15,13 +17,16 @@ namespace LetdsGoAndDive.Controllers
         private readonly ApplicationDbContext _db;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly IHubContext<AdminNotificationHub> _notificationHub;
 
-        public CartController(ICartRepository cartRepo, ApplicationDbContext db, UserManager<ApplicationUser> userManager, IHttpContextAccessor httpContextAccessor)
+
+        public CartController(ICartRepository cartRepo, ApplicationDbContext db, UserManager<ApplicationUser> userManager, IHttpContextAccessor httpContextAccessor, IHubContext<AdminNotificationHub> notificationHub)
         {
             _cartRepo = cartRepo;
             _db = db;
             _userManager = userManager;
             _httpContextAccessor = httpContextAccessor;
+            _notificationHub = notificationHub;
         }
 
 
@@ -176,6 +181,11 @@ namespace LetdsGoAndDive.Controllers
                 _db.Orders.Update(order);
                 await _db.SaveChangesAsync();
             }
+
+            //  Notify Admin in real-time
+            Console.WriteLine($"[DEBUG] Sending SignalR alert for order {order.Id}");
+            await _notificationHub.Clients.All.SendAsync("ReceiveNewOrderAlert", $"🛒 New order from {model.Name}!");
+
 
             return RedirectToAction(nameof(OrderSucces), new { orderId = order.Id });
         }
