@@ -99,14 +99,25 @@
         <div class="container p-4">
             <div class="row">
 
-                <!-- Company Info -->
                 <div class="col-lg-4 col-md-6 mb-4 mb-md-0">
                     <h5 class="text-uppercase fw-bold">About Us</h5>
                     <p>
-                        Your trusted partner for premium diving bags and underwater gear.
+                        Your trusted partner for premium freediving bags and underwater gear.
                         We help every diver explore the deep with confidence, comfort, and style. 🌊
                     </p>
+
+                    <div class="d-flex flex-column">
+                        <a asp-controller="Home" asp-action="About"
+                           class="text-white text-decoration-underline mb-1">
+                            Learn more
+                        </a>
+                        <a asp-controller="Home" asp-action="AccessFAQs"
+                           class="text-white text-decoration-underline">
+                            Access FAQs
+                        </a>
+                    </div>
                 </div>
+
 
 
 
@@ -127,9 +138,11 @@
             </div>
         </div>
 
-        <div class="text-center p-3 bg-secondary">
-            © @DateTime.Now.Year Let's Go and Dive. All rights reserved.
+
+        <div class="text-center p-3" style="background-color: #2c2c2c; color: #ffffff;">
+            © @DateTime.Now.Year <strong>Let's Go and Dive</strong>. All rights reserved.
         </div>
+
     </footer>
 
 

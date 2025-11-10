@@ -15,17 +15,35 @@ namespace LetdsGoAndDive.Controllers
             _stockRepo = stockRepo;
         }
 
-        public async Task<IActionResult> Index(string sTerm = "", int page = 1, int pageSize = 10)
+        public async Task<IActionResult> Index(string sTerm = "", string filter = "all", int page = 1, int pageSize = 10)
         {
             var stocks = await _stockRepo.GetStocks(sTerm);
 
             
+            stocks = filter.ToLower() switch
+            {
+                "good" => stocks.Where(x => x.Quantity > 10),
+                "low" => stocks.Where(x => x.Quantity > 0 && x.Quantity <= 10),
+                "out" => stocks.Where(x => x.Quantity <= 0),
+                _ => stocks 
+            };
+
             var pagedStocks = stocks.ToPagedList(page, pageSize);
 
             ViewBag.SearchTerm = sTerm;
+            ViewBag.Filter = filter;
+
+            ViewBag.EmptyMessage = filter switch
+            {
+                "good" => "No good stock items found.",
+                "low" => "No low stock items found.",
+                "out" => "No out-of-stock items found.",
+                _ => "No products found."
+            };
 
             return View(pagedStocks);
         }
+
 
         // GET
         public async Task<IActionResult> ManageStock(int productId)
