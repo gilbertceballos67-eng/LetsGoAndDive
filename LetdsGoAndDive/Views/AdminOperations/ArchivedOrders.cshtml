@@ -35,12 +35,11 @@
                     <td>@order.PaymentMethod</td>
                     <td>@order.OrderStatus.StatusName</td>
                     <td>
-                        <form asp-action="UnarchiveOrder" asp-controller="AdminOperations" method="post">
+                        <form asp-action="RestoreOrder" method="post">
                             <input type="hidden" name="orderId" value="@order.Id" />
-                            <button type="submit" class="btn btn-success btn-sm">
-                                Restore
-                            </button>
+                            <button type="submit" class="btn btn-success">Restore</button>
                         </form>
+
                     </td>
                 </tr>
             }
