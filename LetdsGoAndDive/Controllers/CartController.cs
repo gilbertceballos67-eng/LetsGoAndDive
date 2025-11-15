@@ -78,7 +78,7 @@ namespace LetdsGoAndDive.Controllers
             var userId = _userManager.GetUserId(User);
             var cart = await _cartRepo.GetUserCart(userId);
 
-            // Debug: Check if cart items have product and itemtype loaded
+            
             if (cart?.CartDetails != null)
             {
                 foreach (var item in cart.CartDetails)
@@ -155,7 +155,9 @@ namespace LetdsGoAndDive.Controllers
 
 
         [HttpPost]
-        public async Task<IActionResult> CheckOut(CheckoutModel model, IFormFile? PaymentProofFile)
+ 
+        public async Task<IActionResult> CheckOut(CheckoutModel model, IFormFile? PaymentProofFile, string? GCashReferenceNumber)
+
         {
             if (!ModelState.IsValid)
                 return View(model);
@@ -181,6 +183,14 @@ namespace LetdsGoAndDive.Controllers
                 _db.Orders.Update(order);
                 await _db.SaveChangesAsync();
             }
+
+            if (!string.IsNullOrEmpty(GCashReferenceNumber))
+            {
+                order.GCashReferenceNumber = GCashReferenceNumber;
+                _db.Orders.Update(order);
+                await _db.SaveChangesAsync();
+            }
+
 
             //  Notify Admin in real-time
             Console.WriteLine($"[DEBUG] Sending SignalR alert for order {order.Id}");

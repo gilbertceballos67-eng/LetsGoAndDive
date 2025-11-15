@@ -85,17 +85,17 @@
                 }
 
               
-                if (stock != null)
-                {
-                    stock.Quantity -= qty;
-                    if (stock.Quantity < 0) stock.Quantity = 0;
-                    _db.Stocks.Update(stock);
-                }
-                else
-                {
+               // if (stock != null)
+               // {
+             //       stock.Quantity -= qty;
+              //      if (stock.Quantity < 0) stock.Quantity = 0;
+              //      _db.Stocks.Update(stock);
+              //  }
+              //  else
+               // {
                     
-                    _db.Stocks.Add(new Stock { ProductId = productId, Quantity = 0 });
-                }
+              //      _db.Stocks.Add(new Stock { ProductId = productId, Quantity = 0 });
+              //  }
 
           
 
@@ -278,7 +278,21 @@
                 _db.Orders.Add(order);
                 await _db.SaveChangesAsync();
 
-               
+                foreach (var item in selectedCartItems)
+                {
+                    var stock = await _db.Stocks.FirstOrDefaultAsync(s => s.ProductId == item.ProductId);
+
+                    if (stock == null)
+                        throw new Exception($"Stock record missing for product: {item.Product.ProductName}");
+
+                    if (stock.Quantity < item.Quanntity)
+                        throw new Exception($"Not enough stock for product: {item.Product.ProductName}");
+
+                    stock.Quantity -= item.Quanntity;
+                    _db.Stocks.Update(stock);
+                }
+
+
                 foreach (var item in selectedCartItems)
                 {
                     var orderDetail = new OrderDetail

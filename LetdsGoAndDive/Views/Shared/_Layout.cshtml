@@ -18,6 +18,26 @@
 <body class="d-flex flex-column min-vh-100 @(ViewData["BodyClass"])">
 
 
+    @using Microsoft.AspNetCore.Http
+    @inject IHttpContextAccessor HttpContextAccessor
+
+    @{
+        var userName = HttpContextAccessor.HttpContext?.User?.Identity?.IsAuthenticated == true
+        ? HttpContextAccessor.HttpContext.User.Identity.Name
+        : "Guest";
+        var today = DateTime.Now.ToString("dddd, MMMM dd, yyyy");
+    }
+    <div class="bg-light border-bottom py-2 px-3 d-flex justify-content-between align-items-center">
+        <div>
+            👤 <strong>@userName</strong>
+        </div>
+        <div>
+            📅 <strong>@today</strong>
+        </div>
+    </div>
+
+
+
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg bg-primary navbar-dark">
         <div class="container-fluid">

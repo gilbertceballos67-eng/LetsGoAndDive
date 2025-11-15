@@ -1,0 +1,108 @@
+﻿@model InventoryDashboardViewModel
+@{
+    ViewData["Title"] = "Inventory Dashboard";
+    Layout = "_AdminLayout";
+}
+
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2>Inventory Dashboard</h2>
+        <div>
+            <a asp-action="ExportExcel" class="btn btn-outline-success me-2"><i class="bi bi-file-earmark-excel"></i> Export Excel</a>
+            <a asp-action="ExportPdf" class="btn btn-outline-secondary"><i class="bi bi-file-earmark-pdf"></i> Export PDF</a>
+        </div>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-body">
+            <form id="filterForm" method="get" class="row g-2 align-items-end">
+                <div class="col-md-3">
+                    <label class="form-label">From</label>
+                    <input type="date" name="from" value="@ViewBag.From" class="form-control" />
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">To</label>
+                    <input type="date" name="to" value="@ViewBag.To" class="form-control" />
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Search</label>
+                    <input type="text" name="search" value="@ViewBag.Search" class="form-control" placeholder="Product name..." />
+                </div>
+                <div class="col-md-3">
+                    <button type="submit" class="btn btn-primary w-100">Apply</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-lg-6">
+            <div class="card h-100">
+                <div class="card-header">Stock Distribution</div>
+                <div class="card-body">
+                    <canvas id="pieStock" height="250"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="card h-100">
+                <div class="card-header">Top Selling Products</div>
+                <div class="card-body">
+                    <canvas id="barSales" height="250"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 mt-3">
+            <div class="card">
+                <div class="card-header">Stock Table</div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Product</th>
+                                    <th>Current Stock</th>
+                                    <th>Qty Sold</th>
+                                    <th>Revenue</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in Model.StockSummary)
+                                {
+                                    var sold = Model.SalesByProduct.FirstOrDefault(s => s.ProductName == item.ProductName);
+                                    <tr>
+                                        <td>@item.ProductName</td>
+                                        <td>
+                                            <span class="fw-bold @(item.Quantity <= 0 ? "text-danger" : item.Quantity <= 10 ? "text-warning" : "text-success")">
+                                                @item.Quantity
+                                            </span>
+                                        </td>
+                                        <td>@(sold?.QuantitySold ?? 0)</td>
+                                        <td>@(sold != null ? sold.Revenue.ToString("N2") : "0.00")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="~/js/inventory-report.js"></script>
+    <script>
+        (function () {
+            
+            window.__inventoryInitial = {
+                stock: @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model.StockSummary)),
+                sales: @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model.SalesByProduct))
+                    };
+        })();
+    </script>
+}

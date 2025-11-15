@@ -16,6 +16,7 @@ namespace LetdsGoAndDive.Controllers
         private readonly ApplicationDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
 
+        // ❌ Removed IUserOrderRepository because AdminChat does NOT use it
         public AdminChatController(ApplicationDbContext context, UserManager<ApplicationUser> userManager)
         {
             _context = context;
@@ -27,14 +28,13 @@ namespace LetdsGoAndDive.Controllers
         {
             var userEmails = await _context.Messages
                 .Where(m => m.Sender != "AdminGroup" && !m.IsDeleted)
-                .Join(_context.Users, m => m.Sender, u => u.Email, (m, u) => u.Email)  // ✅ Ensures Sender matches a real Email
+                .Join(_context.Users, m => m.Sender, u => u.Email, (m, u) => u.Email)
                 .Distinct()
                 .ToListAsync();
 
             return View(userEmails);
         }
 
-        // ✅ Chat view (unchanged, but now user param is always a valid email)
         public async Task<IActionResult> Chat(string user)
         {
             if (string.IsNullOrEmpty(user))
@@ -74,7 +74,6 @@ namespace LetdsGoAndDive.Controllers
             return View(messages);
         }
 
-        // ✅ Unchanged
         [HttpGet]
         public async Task<IActionResult> GetUnreadCount()
         {
@@ -84,7 +83,6 @@ namespace LetdsGoAndDive.Controllers
             return Json(count);
         }
 
-        // ✅ Unchanged (already handles name/email mapping)
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConversation(string user)
@@ -123,7 +121,7 @@ namespace LetdsGoAndDive.Controllers
             }
 
             var hubContext = HttpContext.RequestServices.GetRequiredService<IHubContext<ChatHub>>();
-            await hubContext.Clients.Group(userEmail).SendAsync("conversationdeleted", userEmail);  // ✅ FIXED: Lowercase
+            await hubContext.Clients.Group(userEmail).SendAsync("conversationdeleted", userEmail);
 
             TempData["Success"] = "Conversation deleted.";
             return RedirectToAction("Index");

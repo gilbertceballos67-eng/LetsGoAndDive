@@ -159,5 +159,30 @@ namespace LetdsGoAndDive.Hubs
             var count = await _context.Messages.CountAsync(m => m.Receiver == userEmail && !m.IsRead && !m.IsDeleted);
             await Clients.Group(userEmail).SendAsync("UpdateUnreadCount", count);
         }
+
+
+        public async Task SendAdminNotice(string userEmail, string message)
+        {
+            if (string.IsNullOrWhiteSpace(userEmail) || string.IsNullOrWhiteSpace(message))
+                return;
+
+            // Save in DB
+            var msg = new Message
+            {
+                Sender = "AdminGroup",
+                Receiver = userEmail,
+                Text = message,
+                SentAt = DateTime.UtcNow,
+                IsRead = false,
+                IsDeleted = false
+            };
+
+            await _context.Messages.AddAsync(msg);
+            await _context.SaveChangesAsync();
+
+            // Send to user in real-time
+            await Clients.Group(userEmail).SendAsync("receivemessage", "Admin", message);
+        }
+
     }
 }

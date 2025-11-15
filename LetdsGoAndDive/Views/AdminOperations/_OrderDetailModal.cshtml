@@ -9,54 +9,107 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <table class="table table-striped align-middle text-center">
-                    <thead class="table-dark">
-                        <tr>
-                            <th>Image</th>
-                            <th>Product</th>
-                            <th>Item</th>
-                            <th>Price</th>
-                            <th>Quantity</th>
-                            <th>Total Price</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @{
-                            double grandTotal = 0;
-                        }
-                        @foreach (var item in Model.OrderDetail)
-                        {
-                            var total = item.Quantity * item.UnitPrice;
-                            grandTotal += total;
 
-                            <tr>
-                                <td>
-                                    @if (string.IsNullOrEmpty(item.Product?.Image))
-                                    {
-                                        <img src="~/images/No_Image_Available.jpg" style="width:60px; height:60px; object-fit:cover;" />
-                                    }
-                                    else
-                                    {
-                                        <img src="~/images/@item.Product.Image" asp-append-version="true" style="width:60px; height:60px; object-fit:cover;" />
-                                    }
-                                </td>
-                                <td>@item.Product?.ProductName</td>
-                                <td>@item.Product?.ItemType?.ItemTypeName</td>
-                                <td>₱@item.UnitPrice</td>
-                                <td>@item.Quantity</td>
-                                <td><strong>₱@total</strong></td>
-                            </tr>
+                @if (Model.OrderDetail != null && Model.OrderDetail.Any())
+                {
+                    var order = Model.OrderDetail.First().Order;
+
+                    <!-- 🧾 Order Information Section -->
+                    <div class="mb-3">
+                        <h5 class="border-bottom pb-2">Order Information</h5>
+                        <p><strong>Customer Name:</strong> @order.Name</p>
+                        <p><strong>Address:</strong> @order.Address</p>
+                        <p><strong>Payment Method:</strong> @order.PaymentMethod</p>
+
+                        @if (order.PaymentMethod == "GCash")
+                        {
+                            <p>
+                                <strong>GCash Reference Number:</strong>
+                                @(string.IsNullOrEmpty(order.GCashReferenceNumber)
+                                    ? "—"
+                                    : order.GCashReferenceNumber)
+                            </p>
                         }
-                        <tr class="table-dark">
-                            <td colspan="5" class="text-end"><strong>Grand Total:</strong></td>
-                            <td><strong>₱@grandTotal</strong></td>
-                        </tr>
-                    </tbody>
-                </table>
+
+                        <p>
+                            <strong>Payment Status:</strong>
+                            @if (order.IsPaid)
+                            {
+                                <span class="badge bg-success">Paid</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-warning text-dark">Pending</span>
+                            }
+                        </p>
+
+                        <p><strong>Order Status:</strong> @order.OrderStatus?.StatusName</p>
+
+                        @if (!string.IsNullOrEmpty(order.ProofOfPaymentImagePath))
+                        {
+                            <div class="mt-2">
+                                <strong>Proof of Payment:</strong><br />
+                                <a href="@order.ProofOfPaymentImagePath" target="_blank">
+                                    <img src="@order.ProofOfPaymentImagePath" alt="Proof of Payment" style="max-width:200px; border-radius:8px;" />
+                                </a>
+                            </div>
+                        }
+                    </div>
+
+                    <!-- 🛍️ Order Items Table -->
+                    <table class="table table-striped align-middle text-center">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Image</th>
+                                <th>Product</th>
+                                <th>Item</th>
+                                <th>Price</th>
+                                <th>Quantity</th>
+                                <th>Total Price</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @{
+                                double grandTotal = 0;
+                            }
+                            @foreach (var item in Model.OrderDetail)
+                            {
+                                var total = item.Quantity * item.UnitPrice;
+                                grandTotal += total;
+
+                                <tr>
+                                    <td>
+                                        @if (string.IsNullOrEmpty(item.Product?.Image))
+                                        {
+                                            <img src="~/images/No_Image_Available.jpg" style="width:60px; height:60px; object-fit:cover;" />
+                                        }
+                                        else
+                                        {
+                                            <img src="~/images/@item.Product.Image" asp-append-version="true" style="width:60px; height:60px; object-fit:cover;" />
+                                        }
+                                    </td>
+                                    <td>@item.Product?.ProductName</td>
+                                    <td>@item.Product?.ItemType?.ItemTypeName</td>
+                                    <td>₱@item.UnitPrice</td>
+                                    <td>@item.Quantity</td>
+                                    <td><strong>₱@total</strong></td>
+                                </tr>
+                            }
+                            <tr class="table-dark">
+                                <td colspan="5" class="text-end"><strong>Grand Total:</strong></td>
+                                <td><strong>₱@grandTotal</strong></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                }
+                else
+                {
+                    <p>No order details found.</p>
+                }
             </div>
+
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-primary">Save changes</button>
             </div>
         </div>
     </div>

@@ -6,7 +6,10 @@ using LetdsGoAndDive.Repositories;
 using LetdsGoAndDive.Shared;
 using LetdsGoAndDive.Hubs;
 using Microsoft.AspNetCore.Http.Connections;
-using Microsoft.AspNetCore.HttpOverrides; 
+using Microsoft.AspNetCore.HttpOverrides;
+using DinkToPdf;
+using DinkToPdf.Contracts;
+    
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -58,6 +61,18 @@ builder.Services.AddScoped<IFileService, FileService>();
 builder.Services.AddScoped<IProductRepository, ProductRepository>();
 builder.Services.AddScoped<UserManager<ApplicationUser>>();
 builder.Services.AddSession();
+builder.Services.AddHttpContextAccessor();
+
+// Program.cs (or Startup.cs)
+builder.Services.AddScoped<IInventoryRepository, InventoryRepository>();
+
+// DinkToPdf registration (example)
+var context = new CustomAssemblyLoadContext();
+var architectureFolder = Path.Combine(Environment.CurrentDirectory, "Native"); // where native lib sits
+// load native libs accordingly - follow DinkToPdf docs
+builder.Services.AddSingleton(typeof(IConverter), new SynchronizedConverter(new PdfTools()));
+
+
 
 var app = builder.Build();
 

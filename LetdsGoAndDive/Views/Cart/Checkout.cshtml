@@ -41,11 +41,21 @@
 
     <div id="paymentInstructions" class="py-2" style="display:none;">
         <div class="alert alert-info">
+
             <strong>GCash Payment Instructions:</strong><br />
-            Send your payment to qr code that the website provide.<br />
+            Send your payment to the QR code provided by the website.<br />
             After paying, please upload your payment proof below to confirm your order.
+            <br /><br />
+
+            <strong>Delivery fee reminder:</strong><br />
+            <em>
+                The delivery fee is <u>not included</u> in your order total.
+                You will pay the delivery fee directly to the rider upon delivery.
+            </em>
+
         </div>
     </div>
+
 
     <div id="gcashSection" style="display:none;" class="py-2">
         <label><b>Scan QR to Pay:</b></label><br />
@@ -61,6 +71,12 @@
         <input type="file" class="form-control" id="paymentProof" name="PaymentProofFile" accept="image/*" />
         <span class="text-danger" id="proofError" style="display:none;">Payment proof is required.</span>
     </div>
+
+    <div id="gcashRefNumber" style="display:none;" class="py-2">
+        <label>GCash Reference Number*</label>
+        <input type="text" class="form-control" id="gcashRefInput" name="GCashReferenceNumber" placeholder="Enter GCash Ref No." />
+    </div>
+
 
     <div class="py-2">
         <button type="submit" class="btn btn-info">Next</button>
@@ -91,12 +107,15 @@
                 gcashSection.style.display = "block";
                 proofUpload.style.display = "block";
                 paymentInstructions.style.display = "block";
+                document.getElementById("gcashRefNumber").style.display = "block"; 
             } else {
                 gcashSection.style.display = "none";
                 proofUpload.style.display = "none";
                 paymentInstructions.style.display = "none";
+                document.getElementById("gcashRefNumber").style.display = "none";
             }
         });
+
 
         // Require proof for GCash
         form.addEventListener("submit", function (e) {

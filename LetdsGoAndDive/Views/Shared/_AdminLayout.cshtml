@@ -43,6 +43,12 @@
                         <i class="bi bi-receipt"></i> Orders
                     </a>
                 </li>
+                <li class="nav-item">
+                    <a class="nav-link navigation-link" asp-controller="AdminOperations" asp-action="ArchivedOrders">
+                        <i class="bi bi-folder-x"></i> Archived Orders
+                    </a>
+                </li>
+
 
                 <li class="nav-item">
                     <a class="nav-link navigation-link" asp-controller="Stock" asp-action="Index">
@@ -62,10 +68,19 @@
                     </a>
                 </li>
                 <li class="nav-item">
+                    <a class="nav-link navigation-link" asp-controller="InventoryReport" asp-action="Index">
+                        <i class="bi bi-bar-chart"></i> Inventory Dashboard
+                    </a>
+                </li>
+
+                <li class="nav-item">
                     <a class="nav-link" asp-controller="SalesReport" asp-action="Index">
                         📊 Sales Reports
                     </a>
                 </li>
+
+
+
 
 
         </div>

@@ -26,7 +26,8 @@ namespace LetdsGoAndDive.Controllers
 
         public async Task<IActionResult> Index(string searchTerm = "", int itemTypeId = 0, string sortOrder = "desc", int page = 1)
         {
-            var products = await _productRepo.GetProducts();
+            var products = await _productRepo.GetActiveProducts();
+
             var itemTypes = await _itemTypeRepo.GetItemTypes();
 
             
@@ -231,12 +232,10 @@ namespace LetdsGoAndDive.Controllers
                 }
                 else
                 {
-                    await _productRepo.DeleteProduct(product);
-                    if (!string.IsNullOrWhiteSpace(product.Image))
-                    {
-                        _fileService.DeleteFile(product.Image);
-                    }
-                    TempData["successMessage"] = "Product deleted successfully!";
+                    await _productRepo.ArchiveProduct(product);
+
+                    TempData["successMessage"] = "Product archived successfully!";
+
                 }
             }
             catch (Exception ex)

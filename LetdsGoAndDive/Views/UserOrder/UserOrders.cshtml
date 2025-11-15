@@ -21,7 +21,6 @@
                             @foreach (var detail in order.OrderDetail)
                             {
                                 <li class="mb-2 d-flex align-items-center">
-                                    <!-- Product Image -->
                                     @if (string.IsNullOrEmpty(detail.Product?.Image))
                                     {
                                         <img src="~/images/No_Image_Available.jpg"
@@ -34,7 +33,6 @@
                              style="width:60px; height:60px; object-fit:cover; margin-right:10px;" />
                                     }
 
-                                    <!-- Product Info -->
                                     <div>
                                         <strong>@detail.Product?.ProductName</strong><br />
                                         Quantity: @detail.Quantity <br />
@@ -48,6 +46,21 @@
                     {
                         <span>No details</span>
                     }
+
+                    @* ✅ Payment confirmation message *@
+                    @if (order.IsPaid)
+                    {
+                        <div class="alert alert-success mt-2 p-2">
+                            ✅ Your payment has been confirmed by the admin.
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="alert alert-warning mt-2 p-2">
+                            ⏳ Awaiting admin confirmation of your payment.
+                        </div>
+                    }
+
                     @if (!string.IsNullOrEmpty(order.DeliveryLink) &&
                    order.OrderStatus.StatusName.Equals("Shipped", StringComparison.OrdinalIgnoreCase))
                     {
@@ -59,6 +72,7 @@
                         </div>
                     }
                 </td>
+
                 <td>
                     @{
                         double total = 0;
@@ -70,7 +84,17 @@
                     <strong>₱@total</strong>
                 </td>
 
+
             </tr>
+
+
         }
     </tbody>
+
+
+    <!-- Delivery note -->
+    <div class="alert alert-secondary mt-2 p-2">
+        <strong>Delivery fee:</strong> Delivery fee is <u>not</u> included</strong>. Please pay the delivery rider directly upon delivery.
+    </div>
+
 </table>

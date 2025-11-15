@@ -9,9 +9,13 @@ namespace LetdsGoAndDive.Repositories
     {
         Task AddProduct(Product product);
         Task UpdateProduct(Product product);
-        Task DeleteProduct(Product product);
         Task<Product?> GetProductById(int id);
         Task<IEnumerable<Product>> GetProducts();
+        Task ArchiveProduct(Product product);
+        Task<IEnumerable<Product>> GetActiveProducts();
+        Task<IEnumerable<Product>> GetArchivedProducts();
+
+
     }
 
     public class ProductRepository : IProductRepository
@@ -35,17 +39,22 @@ namespace LetdsGoAndDive.Repositories
             await _context.SaveChangesAsync();
         }
 
-        public async Task DeleteProduct(Product product)
+        public async Task ArchiveProduct(Product product)
         {
-            _context.Products.Remove(product);
+            product.IsArchived = true;
             await _context.SaveChangesAsync();
         }
 
+
         public async Task<Product?> GetProductById(int id)
         {
+       
             return await _context.Products
-                                 .Include(p => p.ItemType)
-                                 .FirstOrDefaultAsync(p => p.Id == id);
+                .Include(p => p.ItemType)
+                .FirstOrDefaultAsync(p => p.Id == id);
+
+
+
         }
 
         public async Task<IEnumerable<Product>> GetProducts()
@@ -54,5 +63,22 @@ namespace LetdsGoAndDive.Repositories
                                  .Include(p => p.ItemType)
                                  .ToListAsync();
         }
+
+        public async Task<IEnumerable<Product>> GetActiveProducts()
+        {
+            return await _context.Products
+                .Where(p => !p.IsArchived)
+                .Include(p => p.ItemType)
+                .ToListAsync();
+        }
+
+        public async Task<IEnumerable<Product>> GetArchivedProducts()
+        {
+            return await _context.Products
+                .Where(p => p.IsArchived)
+                .Include(p => p.ItemType)
+                .ToListAsync();
+        }
+
     }
 }

@@ -25,39 +25,52 @@
                 <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
 
                 <div class="form-floating mb-3">
-                    <input asp-for="Input.FullName" name="Input.FullName" class="form-control" placeholder="Full Name" />
-                    <label asp-for="Input.FullName">Full Name</label>
+                    <input asp-for="Input.FullName" id="Input_FullName" name="Input.FullName" class="form-control" placeholder="Full Name" />
+                    <label asp-for="Input.FullName">Username</label>
                     <span asp-validation-for="Input.FullName" class="text-danger"></span>
                 </div>
 
                 <div class="form-floating mb-3">
-                    <input asp-for="Input.MobileNumber" name="Input.MobileNumber" class="form-control" placeholder="Mobile Number" />
+                    <input asp-for="Input.MobileNumber" id="Input_MobileNumber" name="Input.MobileNumber" class="form-control" placeholder="Mobile Number" />
                     <label asp-for="Input.MobileNumber">Mobile Number</label>
                     <span asp-validation-for="Input.MobileNumber" class="text-danger"></span>
                 </div>
 
                 <div class="form-floating mb-3">
-                    <input asp-for="Input.Address" name="Input.Address" class="form-control" placeholder="Address" />
+                    <input asp-for="Input.Address" id="Input_Address" name="Input.Address" class="form-control" placeholder="Address" />
                     <label asp-for="Input.Address">Address</label>
                     <span asp-validation-for="Input.Address" class="text-danger"></span>
                 </div>
 
                 <div class="form-floating mb-3">
-                    <input asp-for="Input.Email" name="Input.Email" class="form-control" autocomplete="username" placeholder="Email address" />
+                    <input asp-for="Input.Email" id="Input_Email" name="Input.Email" class="form-control" autocomplete="username" placeholder="Email address" />
                     <label asp-for="Input.Email">Email address</label>
                     <span asp-validation-for="Input.Email" class="text-danger"></span>
                 </div>
 
-                <div class="form-floating mb-3">
-                    <input asp-for="Input.Password" name="Input.Password" class="form-control" autocomplete="new-password" placeholder="Password" type="password" />
+                <!-- Password field with explicit id -->
+                <div class="form-floating mb-3 position-relative">
+                    <input asp-for="Input.Password" id="Input_Password" name="Input.Password" class="form-control" autocomplete="new-password" placeholder="Password" type="password" />
                     <label asp-for="Input.Password">Password</label>
                     <span asp-validation-for="Input.Password" class="text-danger"></span>
+                    <div id="passwordHints" class="mt-2 small text-muted" aria-hidden="true">
+                        <ul class="list-unstyled mb-0">
+                            <li id="req-length" style="color:gray;">• At least 8 characters</li>
+                            <li id="req-upper" style="color:gray;">• Contains an uppercase letter (A–Z)</li>
+                            <li id="req-lower" style="color:gray;">• Contains a lowercase letter (a–z)</li>
+                            <li id="req-number" style="color:gray;">• Contains a number (0–9)</li>
+                            <li id="req-special" style="color:gray;">• Contains a special character (!@@#@@$%^&amp;*)</li>
+
+                        </ul>
+                    </div>
                 </div>
 
-                <div class="form-floating mb-4">
-                    <input asp-for="Input.ConfirmPassword" name="Input.ConfirmPassword" class="form-control" autocomplete="new-password" placeholder="Confirm Password" type="password" />
+                <!-- Confirm password with explicit id -->
+                <div class="form-floating mb-4 position-relative">
+                    <input asp-for="Input.ConfirmPassword" id="Input_ConfirmPassword" name="Input.ConfirmPassword" class="form-control" autocomplete="new-password" placeholder="Confirm Password" type="password" />
                     <label asp-for="Input.ConfirmPassword">Confirm Password</label>
                     <span asp-validation-for="Input.ConfirmPassword" class="text-danger"></span>
+                    <div id="passwordMatch" class="mt-2 small"></div>
                 </div>
 
                 <button id="registerSubmit" type="submit" class="btn btn-primary w-100 py-2 fw-semibold" style="border-radius: 10px;">
@@ -72,4 +85,5 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.5/jquery.validate.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validation-unobtrusive/4.0.0/jquery.validate.unobtrusive.min.js"></script>
+    <script src="~/js/register.js"></script>
 }

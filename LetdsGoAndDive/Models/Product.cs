@@ -21,6 +21,9 @@ namespace LetdsGoAndDive.Models
         public string? Description { get; set; }
 
 
+        public bool IsArchived { get; set; } = false;
+
+
         public Stock Stock { get; set; }
         [NotMapped]
         public int Quantity { get; set; }

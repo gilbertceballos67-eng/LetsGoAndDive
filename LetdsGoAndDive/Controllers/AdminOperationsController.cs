@@ -12,15 +12,23 @@ namespace LetdsGoAndDive.Controllers
     public class AdminOperationsController : Controller
     {
         private readonly IUserOrderRepository _userOrderRepository;
+        private readonly IProductRepository _productRepo;
+        private readonly ApplicationDbContext _context;
 
-        public AdminOperationsController(IUserOrderRepository userOrderRepository)
+
+        public AdminOperationsController(IUserOrderRepository userOrderRepository, IProductRepository productRepo,
+    ApplicationDbContext context)
         {
             _userOrderRepository = userOrderRepository;
+            _productRepo = productRepo;
+            _context = context;
         }
 
         public async Task<IActionResult> AllOrders(int page = 1, int pageSize = 8)
         {
-            var orders = await _userOrderRepository.UserOrders(true);
+            var orders = (await _userOrderRepository.UserOrders(true))
+                   .Where(o => !o.IsArchived); 
+
 
             int totalItems = orders.Count();
             var pagedOrders = orders
@@ -43,11 +51,11 @@ namespace LetdsGoAndDive.Controllers
             if (order == null)
                 return NotFound();
 
-            // ✅ Toggle the IsPaid field
+            //  Toggle the IsPaid field
             order.IsPaid = !order.IsPaid;
             await _userOrderRepository.UpdateOrder(order);
 
-            // ✅ Send invoice only when order becomes Paid
+            //  Send invoice only when order becomes Paid
             if (order.IsPaid)
             {
                 SendInvoiceEmail(order);
@@ -89,10 +97,19 @@ namespace LetdsGoAndDive.Controllers
                 return RedirectToAction(nameof(AllOrders));
             }
 
-           
+            // Update status
             order.OrderStatusId = data.OrderStatusId;
 
-           
+            bool feeUpdated = false;
+
+            // Delivery Fee Update
+            if (data.DeliveryFee.HasValue)
+            {
+                order.DeliveryFee = data.DeliveryFee.Value;
+                feeUpdated = true;
+            }
+
+            // If Shipped, require DeliveryLink
             var status = (await _userOrderRepository.GetOrderStatuses())
                             .FirstOrDefault(s => s.Id == data.OrderStatusId);
 
@@ -105,6 +122,7 @@ namespace LetdsGoAndDive.Controllers
                 else
                 {
                     TempData["msg"] = "Please enter a delivery link before marking as shipped.";
+
                     ViewBag.OrderStatusList = (await _userOrderRepository.GetOrderStatuses())
                         .Select(s => new SelectListItem
                         {
@@ -112,41 +130,81 @@ namespace LetdsGoAndDive.Controllers
                             Text = s.StatusName,
                             Selected = s.Id == data.OrderStatusId
                         }).ToList();
+
                     return View(order);
                 }
             }
 
             await _userOrderRepository.UpdateOrder(order);
+
+            // 🔔 SEND MESSAGE TO USER IF DELIVERY FEE WAS UPDATED
+            if (feeUpdated)
+            {
+                var message = new Message
+                {
+                    Sender = "AdminGroup",
+                    Receiver = order.Email,  // user email
+                    Text = $"📦 Update on your order #{order.Id}: Delivery fee has been set to ₱{order.DeliveryFee}.",
+                    SentAt = DateTime.UtcNow,
+                    IsRead = false
+                };
+
+                _context.Messages.Add(message);
+                await _context.SaveChangesAsync();
+            }
+
             TempData["msg"] = "Updated successfully";
             return RedirectToAction(nameof(UpdateOrderStatus), new { orderId = order.Id });
         }
 
 
-        [HttpPost]
-        public async Task<IActionResult> DeleteOrder(int orderId)
-        {
-            try
-            {
-                bool deleted = await _userOrderRepository.DeleteOrder(orderId);
-                TempData["msg"] = deleted
-                    ? "Order deleted successfully."
-                    : "Order not found or could not be deleted.";
-            }
-            catch (Exception ex)
-            {
-                TempData["msg"] = $"Error deleting order: {ex.Message}";
-            }
 
-            return RedirectToAction(nameof(AllOrders));
+
+        [HttpPost]
+        public async Task<IActionResult> ArchiveOrder(int orderId)
+        {
+            var order = await _userOrderRepository.GetOrderById(orderId);
+            if (order == null)
+                return NotFound();
+
+            order.IsArchived = true;
+            await _userOrderRepository.UpdateOrder(order);
+
+            TempData["msg"] = "Order archived successfully!";
+            return RedirectToAction("AllOrders");
         }
 
-        // 🔹 Send invoice email method
+        public async Task<IActionResult> ArchivedOrders(int page = 1, int pageSize = 10)
+        {
+            var archived = (await _userOrderRepository.UserOrders(true))
+                            .Where(o => o.IsArchived)
+                            .OrderByDescending(o => o.CreateDate)
+                            .ToList();
+
+            int totalItems = archived.Count;
+
+            var pagedOrders = archived
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToList();
+
+            ViewBag.CurrentPage = page;
+            ViewBag.TotalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
+
+            return View(pagedOrders);
+        }
+
+
+
+
+
+        // Send invoice email method
         private void SendInvoiceEmail(Order order)
         {
             try
             {
                 string fromEmail = "letsgoanddive.invoice@gmail.com";
-                string appPassword = "szvj irqv wppn ydrc"; // your Gmail App Password
+                string appPassword = "szvj irqv wppn ydrc"; // Gmail App Password
                 string subject = "Payment Confirmation & Invoice - Let's Go And Dive";
 
                 // Build item list table
@@ -216,7 +274,30 @@ namespace LetdsGoAndDive.Controllers
             {
                 Console.WriteLine("Error sending email: " + ex.Message);
             }
+
+
         }
+
+        public async Task<IActionResult> Archived()
+        {
+            var archived = await _productRepo.GetArchivedProducts();
+            return View(archived);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> RestoreOrder(int orderId)
+        {
+            var order = await _userOrderRepository.GetOrderById(orderId);
+            if (order == null) return NotFound();
+
+            order.IsArchived = false;
+            await _userOrderRepository.UpdateOrder(order);
+
+            TempData["msg"] = "Order restored successfully!";
+            return RedirectToAction("ArchivedOrders");
+        }
+
+
 
     }
 }

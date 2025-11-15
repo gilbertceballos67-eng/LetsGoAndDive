@@ -28,7 +28,7 @@ namespace LetdsGoAndDive.Controllers
 
             var userEmail = currentUser.Email;
 
-            // ✅ Fix 1: Match with "AdminGroup" (your Hub & Admin use this name)
+            
             var unreadMessages = _context.Messages
                 .Where(m => m.Receiver == userEmail && m.Sender == "AdminGroup" && !m.IsRead && !m.IsDeleted);
 
@@ -37,7 +37,7 @@ namespace LetdsGoAndDive.Controllers
 
             await _context.SaveChangesAsync();
 
-            // ✅ Fix 2: Also match with AdminGroup for message history
+           
             var messages = await _context.Messages
                 .Where(m => !m.IsDeleted &&
                             ((m.Sender == userEmail && m.Receiver == "AdminGroup") ||
@@ -45,7 +45,7 @@ namespace LetdsGoAndDive.Controllers
                 .OrderBy(m => m.SentAt)
                 .ToListAsync();
 
-            ViewBag.User = userEmail; // ✅ Ensure email goes to the view (SignalR group key)
+            ViewBag.User = userEmail; //  Ensure email goes to the view (SignalR group key)
             return View(messages);
         }
 

@@ -199,12 +199,22 @@ namespace LetdsGoAndDive.Migrations
                     b.Property<DateTime?>("DeletedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<decimal?>("DeliveryFee")
+                        .HasColumnType("numeric");
+
                     b.Property<string>("DeliveryLink")
                         .HasColumnType("text");
 
                     b.Property<string>("Email")
                         .HasMaxLength(30)
                         .HasColumnType("character varying(30)");
+
+                    b.Property<string>("GCashReferenceNumber")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<bool>("IsArchived")
+                        .HasColumnType("boolean");
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
@@ -304,6 +314,9 @@ namespace LetdsGoAndDive.Migrations
                     b.Property<string>("Image")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<bool>("IsArchived")
+                        .HasColumnType("boolean");
 
                     b.Property<int>("ItemTypeID")
                         .HasColumnType("integer");

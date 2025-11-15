@@ -37,8 +37,13 @@ namespace LetdsGoAndDive.Models
         public List<OrderDetail> OrderDetail { get; set; }
 
         public string? ProofOfPaymentImagePath { get; set; }
+        [MaxLength(50)]
+        public string? GCashReferenceNumber { get; set; }
 
         public string? DeliveryLink { get; set; }
+        public decimal? DeliveryFee { get; set; }
+        public bool IsArchived { get; set; } = false;
+
 
 
     }

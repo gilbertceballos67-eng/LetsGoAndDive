@@ -47,7 +47,7 @@
             <tr>
                 <th>Full Name</th>
                 <th>Email</th>
-                <th>Phone</th>
+                <!--<th>Phone</th> -->
                 <th style="width: 180px;">Action</th>
             </tr>
         </thead>
@@ -57,7 +57,7 @@
                 <tr>
                     <td>@user.FullName</td>
                     <td>@user.Email</td>
-                    <td>@user.PhoneNumber</td>
+                    <!-- <td>@user.PhoneNumber</td>-->
                     <td>
                         <a asp-action="EditUser" asp-route-id="@user.Id" class="btn btn-warning btn-sm">Edit</a>
                         <form asp-action="DeleteUser" method="post" style="display:inline;">

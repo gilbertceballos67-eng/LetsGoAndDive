@@ -54,7 +54,7 @@ namespace LetdsGoAndDive.Controllers
             }
         }
 
-        // GET: ItemType/UpdateItemType/5
+      
         public async Task<IActionResult> UpdateItemType(int id)
         {
             var itemType = await _itemTypeRepo.GetItemTypeById(id);
@@ -70,7 +70,7 @@ namespace LetdsGoAndDive.Controllers
             return View(dto);
         }
 
-        // POST: ItemType/UpdateItemType
+       
         [HttpPost]
         public async Task<IActionResult> UpdateItemType(ItemTypeDTO dto)
         {
@@ -96,7 +96,7 @@ namespace LetdsGoAndDive.Controllers
             }
         }
 
-        // GET: ItemType/DeleteItemType/5
+        
         public async Task<IActionResult> DeleteItemType(int id)
         {
             var itemType = await _itemTypeRepo.GetItemTypeById(id);

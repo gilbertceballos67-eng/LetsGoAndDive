@@ -5,10 +5,11 @@
     ViewData["Title"] = "All Orders";
 }
 
+<!--
 <a asp-action="CleanupOldOrders" asp-controller="UserOrder" class="btn btn-danger mb-3">
     <i class="bi bi-trash"></i> Clean Old Orders (30+ Days)
 </a>
-
+-->
 @if (TempData["msg"] != null)
 {
     <div class="alert alert-info mt-3">@TempData["msg"]</div>
@@ -26,6 +27,7 @@
                 <th>Mobile No</th>
                 <th>Address</th>
                 <th>Payment Method</th>
+                <th>GCash Reference</th>
                 <th>Payment Status</th>
                 <th>Order Status</th>
                 <th>Actions</th>
@@ -44,14 +46,32 @@
                         <td>@order.Address</td>
                         <td>@order.PaymentMethod </td>
                         <td>
-                            @if (order.IsPaid)
+                            @if (order.PaymentMethod == "GCash")
                             {
-                                <span class="badge bg-success">Paid</span>
+                                if (!string.IsNullOrEmpty(order.GCashReferenceNumber))
+                                {
+                                    @order.GCashReferenceNumber
+                                }
+                                else
+                                {
+                                    <span class="text-muted">—</span>
+                                }
                             }
                             else
                             {
-                                <span class="badge bg-danger">Not Paid</span>
+                                <span class="text-muted">N/A</span>
                             }
+                        </td>
+                        <td>
+                        <td>
+                                @if (order.IsPaid)
+                                {
+                                <span class="badge bg-success">Paid</span>
+                                }
+                                else
+                                {
+                                <span class="badge bg-warning text-dark">Unpaid</span>
+                                }
                         </td>
                         <td>@order.OrderStatus.StatusName</td>
                         <td>
@@ -70,12 +90,13 @@
                             {
                                 <a href="@order.ProofOfPaymentImagePath" target="_blank" class="btn btn-sm btn-warning mt-1">Proof of Payment</a>
                             }
-                            <form asp-action="DeleteOrder" asp-controller="AdminOperations" asp-route-orderId="@order.Id" method="post" style="display:inline;">
-                                <button type="submit" class="btn btn-sm btn-danger mt-1"
-                                onclick="return confirm('Are you sure you want to delete this order permanently?');">
-                                    Delete
+                            <form asp-action="ArchiveOrder" asp-controller="AdminOperations" asp-route-orderId="@order.Id" method="post" style="display:inline;">
+                                <button type="submit" class="btn btn-sm btn-warning mt-1"
+                                onclick="return confirm('Archive this order? It will not be deleted.');">
+                                    Archive
                                 </button>
                             </form>
+
 
                             @await Html.PartialAsync("/Views/AdminOperations/_OrderDetailModal.cshtml",
                     new OrderDetailModalDTO { DivId = order.Id.ToString(), OrderDetail = order.OrderDetail })
@@ -116,6 +137,7 @@
                     <li class="page-item @(ViewBag.CurrentPage == ViewBag.TotalPages ? "disabled" : "")">
                         <a class="page-link" asp-action="AllOrders" asp-route-page="@ViewBag.TotalPages">»</a>
                     </li>
+
                 </ul>
             </nav>
         }

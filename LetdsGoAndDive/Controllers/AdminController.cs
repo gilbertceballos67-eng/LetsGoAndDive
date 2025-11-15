@@ -131,9 +131,10 @@ namespace LetdsGoAndDive.Controllers
 
             user.FullName = model.FullName;
             user.Email = model.Email;
+            user.UserName = model.Email;
             user.PhoneNumber = model.PhoneNumber;
             user.MobileNumber = model.MobileNumber;
-            user.UserName = model.Email;
+            user.Address = model.Address;
 
             var result = await _userManager.UpdateAsync(user);
             if (result.Succeeded)

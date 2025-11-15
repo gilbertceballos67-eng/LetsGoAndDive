@@ -1,13 +1,41 @@
 ﻿@model LetdsGoAndDive.Models.Order
 @{
-    ViewData["Title"] = "OrderSucces";
+    Layout = "_Layout"; // or your admin layout if different
+    ViewData["Title"] = "Order Success";
 }
 
-<div class="text-center mt-5">
-    <h2>✅ Thank you for your order!</h2>
-    <p>Your order number is: <strong>@Model.Id</strong></p>
-    <p>We will contact you shortly at <strong>@Model.Email</strong> or <strong>@Model.MobileNumber</strong>.</p>
-    <p>Payment Method: <strong>@Model.PaymentMethod</strong></p>
+<div class="container py-4">
+    <h2>Order placed — Thank you!</h2>
 
-    <a asp-controller="Home" asp-action="Index" class="btn btn-primary mt-3">Back to Home</a>
+    <div class="card my-3">
+        <div class="card-body">
+            <h5>Order #@Model.Id</h5>
+            <p><strong>Order Date:</strong> @Model.CreateDate.ToLocalTime().ToString("MMMM dd, yyyy HH:mm")</p>
+
+            <h6>Items</h6>
+            <ul class="list-unstyled">
+                @foreach (var d in Model.OrderDetail)
+                {
+                    <li class="mb-2">
+                        <strong>@d.Product?.ProductName</strong> — Qty: @d.Quantity — ₱@(d.UnitPrice.ToString("N2"))
+                    </li>
+                }
+            </ul>
+
+            <h6>Payment & Delivery</h6>
+            <p>
+                <strong>Payment method:</strong> @Model.PaymentMethod ?? "N/A" <br />
+                <strong>Payment status:</strong> @(Model.IsPaid ? "Paid" : "Awaiting confirmation")
+            </p>
+
+            <div class="alert alert-secondary mt-3">
+                <strong>Delivery fee:</strong>
+                <span>The delivery fee is <u>not</u> included in your order total. Please pay the rider directly upon delivery.</span>
+            </div>
+
+            <p class="text-muted small mt-2">If you need a delivery estimate or want us to arrange delivery for you, message the admin via chat.</p>
+        </div>
+    </div>
+
+    <a asp-action="UserOrders" asp-controller="UserOrder" class="btn btn-primary">View My Orders</a>
 </div>
