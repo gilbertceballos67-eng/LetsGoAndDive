@@ -100,7 +100,7 @@ namespace LetdsGoAndDive.Controllers
 
         //  EXPORT TO PDF
 
-        public async Task<IActionResult> ExportToPdf(int? month, int? year)
+        public async Task<IActionResult> ExportToPdf(int? month, int? year, string exportedBy = "Unknown")
         {
             var orders = _context.Orders
                 .Include(o => o.OrderDetail)
@@ -108,7 +108,6 @@ namespace LetdsGoAndDive.Controllers
                 .Where(o => !o.IsDeleted && o.IsPaid)
                 .AsQueryable();
 
-       
             if (year.HasValue)
             {
                 orders = orders.Where(o => o.CreateDate.Year == year);
@@ -132,7 +131,6 @@ namespace LetdsGoAndDive.Controllers
                 PdfWriter writer = PdfWriter.GetInstance(pdfDoc, stream);
                 pdfDoc.Open();
 
-                // HEADER
                 var titleFont = FontFactory.GetFont("Helvetica", 18, Font.BOLD);
                 var subFont = FontFactory.GetFont("Helvetica", 12, Font.NORMAL);
                 var boldFont = FontFactory.GetFont("Helvetica", 12, Font.BOLD);
@@ -149,13 +147,15 @@ namespace LetdsGoAndDive.Controllers
                 };
                 pdfDoc.Add(title);
 
+                // Updated section with exporter name
                 Paragraph dateInfo = new Paragraph(
-                    $"Month: {monthLabel} / Year: {yearLabel}\nGenerated on: {DateTime.Now:MMMM dd, yyyy}\n\n",
+                    $"Month: {monthLabel} / Year: {yearLabel}\n" +
+                    $"Generated on: {DateTime.Now:MMMM dd, yyyy hh:mm tt}\n" +
+                    $"Exported By: {exportedBy}\n\n",
                     subFont
                 );
                 pdfDoc.Add(dateInfo);
 
-                // LINE SEPARATOR
                 PdfPTable lineTable = new PdfPTable(1) { WidthPercentage = 100 };
                 PdfPCell lineCell = new PdfPCell(new Phrase(""))
                 {
@@ -168,7 +168,6 @@ namespace LetdsGoAndDive.Controllers
                 pdfDoc.Add(lineTable);
                 pdfDoc.Add(new Paragraph(" "));
 
-                // TABLE
                 PdfPTable table = new PdfPTable(5)
                 {
                     WidthPercentage = 100,
@@ -208,7 +207,6 @@ namespace LetdsGoAndDive.Controllers
 
                 pdfDoc.Add(table);
 
-                // TOTAL
                 Paragraph totalParagraph = new Paragraph($"Total Sales: ₱{total:N2}", boldFont)
                 {
                     Alignment = Element.ALIGN_RIGHT,
@@ -216,7 +214,6 @@ namespace LetdsGoAndDive.Controllers
                 };
                 pdfDoc.Add(totalParagraph);
 
-                // FOOTER
                 pdfDoc.Add(new Paragraph("\nThank you for managing your sales with Let's Go and Dive!", subFont)
                 {
                     Alignment = Element.ALIGN_CENTER,
@@ -231,9 +228,10 @@ namespace LetdsGoAndDive.Controllers
             }
         }
 
- 
+
+
         //  RESET SALES
- 
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ResetSales(int? month, int? year)

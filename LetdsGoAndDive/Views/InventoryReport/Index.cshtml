@@ -9,7 +9,24 @@
         <h2>Inventory Dashboard</h2>
         <div>
             <!-- <a asp-action="ExportExcel" class="btn btn-outline-success me-2"><i class="bi bi-file-earmark-excel"></i> Export Excel</a>-->
-            <a asp-action="ExportPdf" class="btn btn-outline-secondary"><i class="bi bi-file-earmark-pdf"></i> Export PDF</a>
+            <a href="#" onclick="askExporter()" class="btn btn-outline-secondary">
+                <i class="bi bi-file-earmark-pdf"></i> Export PDF
+            </a>
+
+            <script>
+                function askExporter() {
+                    let name = prompt("Enter name of exporter:");
+
+                    if (!name || name.trim() === "") {
+                        alert("Exporter name is required.");
+                        return;
+                    }
+
+                    // Redirect with exporter name added to query string
+                    window.location.href = `/InventoryReport/ExportPdf?exportedBy=${encodeURIComponent(name)}`;
+                }
+            </script>
+
         </div>
     </div>
 

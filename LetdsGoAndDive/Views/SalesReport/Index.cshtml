@@ -56,7 +56,24 @@
             <button type="submit" class="btn btn-warning">🔁 Reset Sales</button>
         </form>
 
-        <a asp-action="ExportToPdf" asp-route-month="@ViewBag.Month" asp-route-year="@ViewBag.Year" class="btn btn-danger">🖨 Export PDF</a>
+        <a href="#" onclick="exportSalesPdf()" class="btn btn-danger">🖨 Export PDF</a>
+
+        <script>
+            function exportSalesPdf() {
+                let name = prompt("Enter name of exporter:");
+
+                if (!name || name.trim() === "") {
+                    alert("Exporter name is required.");
+                    return;
+                }
+
+                let month = "@ViewBag.Month";
+                let year = "@ViewBag.Year";
+
+                window.location.href = `/SalesReport/ExportToPdf?month=${month}&year=${year}&exportedBy=${encodeURIComponent(name)}`;
+            }
+        </script>
+
     </div>
 </div>
 

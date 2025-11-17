@@ -20,6 +20,13 @@ public class InventoryReportController : Controller
         _inventoryRepo = inventoryRepo;
     }
 
+    // 🔧 Convert to UTC for PostgreSQL compatibility
+    private DateTime? ToUtc(DateTime? dt)
+    {
+        if (dt == null) return null;
+        return DateTime.SpecifyKind(dt.Value, DateTimeKind.Utc);
+    }
+
     public async Task<IActionResult> Index(string search = "", DateTime? from = null, DateTime? to = null, int? itemTypeId = null)
     {
         ViewBag.Search = search;
@@ -28,7 +35,7 @@ public class InventoryReportController : Controller
         ViewBag.ItemTypeId = itemTypeId;
 
         var stockSummary = await _inventoryRepo.GetStockSummary(search);
-        var sales = await _inventoryRepo.GetSalesByProduct(from, to, itemTypeId);
+        var sales = await _inventoryRepo.GetSalesByProduct(ToUtc(from), ToUtc(to), itemTypeId);
 
         var model = new InventoryDashboardViewModel
         {
@@ -39,11 +46,10 @@ public class InventoryReportController : Controller
         return View(model);
     }
 
-    // Chart Data
     [HttpGet]
     public async Task<IActionResult> ChartData(DateTime? from = null, DateTime? to = null, int? itemTypeId = null)
     {
-        var sales = await _inventoryRepo.GetSalesByProduct(from, to, itemTypeId);
+        var sales = await _inventoryRepo.GetSalesByProduct(ToUtc(from), ToUtc(to), itemTypeId);
         var stock = await _inventoryRepo.GetStockSummary("");
 
         var result = new
@@ -59,7 +65,7 @@ public class InventoryReportController : Controller
     [HttpGet]
     public async Task<IActionResult> ExportExcel(DateTime? from = null, DateTime? to = null, int? itemTypeId = null)
     {
-        var sales = await _inventoryRepo.GetSalesByProduct(from, to, itemTypeId);
+        var sales = await _inventoryRepo.GetSalesByProduct(ToUtc(from), ToUtc(to), itemTypeId);
         var stock = await _inventoryRepo.GetStockSummary("");
 
         ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
@@ -82,7 +88,6 @@ public class InventoryReportController : Controller
             ws.Cells[row, 2].Value = s.Quantity;
             ws.Cells[row, 3].Value = sold?.QuantitySold ?? 0;
             ws.Cells[row, 4].Value = sold?.Revenue ?? 0;
-
             row++;
         }
 
@@ -95,17 +100,19 @@ public class InventoryReportController : Controller
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             $"InventoryReport_{DateTime.UtcNow:yyyyMMddHHmm}.xlsx");
     }
-
-    // PDF export (iTextSharp)
     [HttpGet]
-    public async Task<IActionResult> ExportPdf(DateTime? from = null, DateTime? to = null, int? itemTypeId = null)
+    public async Task<IActionResult> ExportPdf(
+        DateTime? from = null,
+        DateTime? to = null,
+        int? itemTypeId = null,
+        string exportedBy = "Unknown"
+    )
     {
-        var sales = await _inventoryRepo.GetSalesByProduct(from, to, itemTypeId);
+        var sales = await _inventoryRepo.GetSalesByProduct(ToUtc(from), ToUtc(to), itemTypeId);
         var stock = await _inventoryRepo.GetStockSummary("");
 
         using (MemoryStream stream = new MemoryStream())
         {
-            // A4 PDF
             Document pdfDoc = new Document(PageSize.A4, 25, 25, 30, 30);
             PdfWriter writer = PdfWriter.GetInstance(pdfDoc, stream);
             pdfDoc.Open();
@@ -113,23 +120,25 @@ public class InventoryReportController : Controller
             // Title
             var titleFont = FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 16);
             pdfDoc.Add(new Paragraph("Inventory Report", titleFont));
-            pdfDoc.Add(new Paragraph("\n"));
 
-            // Table with 4 columns
+            // Timestamp (PH Time) + Exported By
+            var normalFont = FontFactory.GetFont(FontFactory.HELVETICA, 10);
+            pdfDoc.Add(new Paragraph($"Generated on: {DateTime.UtcNow.AddHours(8):MMMM dd, yyyy hh:mm tt}", normalFont));
+            pdfDoc.Add(new Paragraph($"Exported By: {exportedBy}", normalFont));
+            pdfDoc.Add(new Paragraph("\n")); // Space
+
+            // Table
             PdfPTable table = new PdfPTable(4);
             table.WidthPercentage = 100;
-            float[] widths = new float[] { 35f, 20f, 20f, 25f };
+            float[] widths = { 35f, 20f, 20f, 25f };
             table.SetWidths(widths);
 
-            // Header style
             var headerFont = FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 12);
-
             table.AddCell(new PdfPCell(new Phrase("Product", headerFont)));
             table.AddCell(new PdfPCell(new Phrase("Current Stock", headerFont)));
             table.AddCell(new PdfPCell(new Phrase("Quantity Sold", headerFont)));
             table.AddCell(new PdfPCell(new Phrase("Revenue", headerFont)));
 
-            // Add rows
             foreach (var s in stock)
             {
                 var sold = sales.FirstOrDefault(x => x.ProductName == s.ProductName);
@@ -143,9 +152,12 @@ public class InventoryReportController : Controller
             pdfDoc.Add(table);
             pdfDoc.Close();
 
-            return File(stream.ToArray(), "application/pdf",
-                $"InventoryReport_{DateTime.UtcNow:yyyyMMddHHmm}.pdf");
+            return File(
+                stream.ToArray(),
+                "application/pdf",
+                $"InventoryReport_{DateTime.UtcNow.AddHours(8):yyyyMMddHHmm}.pdf"
+            );
         }
     }
-    
+
 }
