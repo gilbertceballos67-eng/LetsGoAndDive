@@ -58,8 +58,9 @@ namespace LetdsGoAndDive.Controllers
             //  Send invoice only when order becomes Paid
             if (order.IsPaid)
             {
-                SendInvoiceEmail(order);
+                Task.Run(() => SendInvoiceEmail(order));
             }
+
 
             TempData["msg"] = $"Payment status updated to {(order.IsPaid ? "Paid" : "Not Paid")}.";
 
