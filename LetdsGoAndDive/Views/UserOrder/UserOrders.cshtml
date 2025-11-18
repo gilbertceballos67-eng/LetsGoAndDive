@@ -5,6 +5,7 @@
             <th>Order Date</th>
             <th>Order Status</th>
             <th>Order Details</th>
+            <th>Delivery Fee</th>   <!-- NEW COLUMN -->
             <th>Total</th>
         </tr>
     </thead>
@@ -73,28 +74,37 @@
                     }
                 </td>
 
+                <!-- NEW DELIVERY FEE COLUMN -->
                 <td>
-                    @{
-                        double total = 0;
-                        foreach (var d in order.OrderDetail)
-                        {
-                            total += d.Quantity * d.UnitPrice;
-                        }
-                    }
-                    <strong>₱@total</strong>
+                    ₱@(order.DeliveryFee ?? 0)
                 </td>
 
+                <!-- TOTAL COLUMN -->
+                <td>
+                    @{
+                        decimal itemTotal = 0;
 
+                        foreach (var d in order.OrderDetail)
+                        {
+                            itemTotal += (decimal)d.Quantity * (decimal)d.UnitPrice;
+                        }
+
+                        decimal deliveryFee = order.DeliveryFee ?? 0;
+                        decimal grandTotal = itemTotal + deliveryFee;
+                    }
+
+                    <strong>₱@grandTotal</strong>
+
+                    <div class="text-muted" style="font-size: 12px;">
+                        Items: ₱@itemTotal
+                    </div>
+                </td>
             </tr>
-
-
         }
     </tbody>
-
-
-    <!-- Delivery note -->
-    <div class="alert alert-secondary mt-2 p-2">
-        <strong>Delivery fee:</strong> Delivery fee is <u>not</u> included</strong>. Please pay the delivery rider directly upon delivery.
-    </div>
-
 </table>
+
+<!-- Delivery note -->
+<div class="alert alert-secondary mt-2 p-2">
+    <strong>Delivery fee:</strong> Delivery fee is <u>not</u> included in the items total. Please pay the delivery rider directly upon delivery.
+</div>
